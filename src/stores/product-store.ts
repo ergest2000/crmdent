@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useAuthStore } from "@/stores/auth-store";
 
 export interface Product {
   id: string;
@@ -21,6 +22,7 @@ interface ProductStore {
   deleteProduct: (id: string) => Promise<void>;
 }
 
+function uid() { return useAuthStore.getState().user?.id; }
 export const useProductStore = create<ProductStore>()(
   persist(
     (set) => ({
@@ -37,7 +39,7 @@ export const useProductStore = create<ProductStore>()(
           ...productData,
           id: `PRD-${Date.now()}`,
           created_at: now,
-          updated_at: now,
+          updated_at: now, user_id: uid(),
         };
         set((s) => ({ products: [product, ...s.products] }));
       },

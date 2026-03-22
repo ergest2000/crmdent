@@ -14,9 +14,11 @@ import {
   UserPlus,
   Package,
   HeartPulse,
+  LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useAuthStore } from "@/stores/auth-store";
 import {
   Sidebar,
   SidebarContent,
@@ -89,6 +91,8 @@ function NavGroup({ label, items }: { label: string; items: typeof mainNav }) {
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const profile = useAuthStore((s) => s.profile);
+  const logout = useAuthStore((s) => s.logout);
 
   return (
     <Sidebar collapsible="icon" className="shadow-[inset_-1px_0_0_0_rgba(0,0,0,0.05)]">
@@ -110,9 +114,27 @@ export function AppSidebar() {
         <NavGroup label="Financa" items={financeNav} />
         <NavGroup label="Admin" items={adminNav} />
       </SidebarContent>
-      <SidebarFooter className="px-4 py-3">
+      <SidebarFooter className="px-3 py-3 space-y-2">
+        {!collapsed && profile && (
+          <div className="flex items-center gap-2 px-1">
+            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary">
+              {profile.full_name?.[0]?.toUpperCase() || profile.email?.[0]?.toUpperCase() || "U"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-foreground truncate">{profile.full_name || profile.email}</p>
+              <p className="text-[10px] text-muted-foreground truncate capitalize">{profile.role}</p>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={() => logout()}
+          className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          {!collapsed && <span>Dil nga llogaria</span>}
+        </button>
         {!collapsed && (
-          <p className="text-[11px] text-muted-foreground">© 2026 DenteOS v1.0</p>
+          <p className="text-[11px] text-muted-foreground px-1">© 2026 DenteOS v1.0</p>
         )}
       </SidebarFooter>
     </Sidebar>

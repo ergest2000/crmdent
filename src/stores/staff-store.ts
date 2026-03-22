@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/stores/auth-store";
 
 export interface StaffMember {
   id: string;
@@ -22,6 +23,7 @@ interface StaffStore {
   deleteStaff: (id: string) => void;
 }
 
+function uid() { return useAuthStore.getState().user?.id; }
 export const useStaffStore = create<StaffStore>((set) => ({
   staff: [],
   loading: false,
@@ -37,7 +39,7 @@ export const useStaffStore = create<StaffStore>((set) => ({
     const id = `STF-${Date.now()}`;
     const member = { ...data, id, stats: { visits: 0, treatments: 0, rating: 0 } };
     set((s) => ({ staff: [...s.staff, member] }));
-    supabase.from("staff").insert({ id, first_name: data.firstName, last_name: data.lastName, role: data.role, phone: data.phone, email: data.email, status: data.status, join_date: data.joinDate, stats: { visits: 0, treatments: 0, rating: 0 } }).then();
+    supabase.from("staff").insert({ id, first_name: data.firstName, last_name: data.lastName, role: data.role, phone: data.phone, email: data.email, status: data.status, join_date: data.joinDate, stats: { visits: 0, treatments: 0, rating: 0 }, user_id: uid() }).then();
   },
 
   updateStaff: (id, data) => {

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/stores/auth-store";
 
 export interface FullTreatment {
   id: string;
@@ -19,6 +20,7 @@ interface TreatmentStore {
   deleteTreatment: (id: string) => void;
 }
 
+function uid() { return useAuthStore.getState().user?.id; }
 export const useTreatmentStore = create<TreatmentStore>((set) => ({
   treatments: [],
   loading: false,
@@ -33,7 +35,7 @@ export const useTreatmentStore = create<TreatmentStore>((set) => ({
   addTreatment: (data) => {
     const id = `TRT-${Date.now()}`;
     set((s) => ({ treatments: [...s.treatments, { ...data, id }] }));
-    supabase.from("treatments").insert({ id, name: data.name, category: data.category, price: data.price, duration: data.duration, description: data.description }).then();
+    supabase.from("treatments").insert({ id, name: data.name, category: data.category, price: data.price, duration: data.duration, description: data.description, user_id: uid() }).then();
   },
 
   updateTreatment: (id, data) => {

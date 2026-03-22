@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/stores/auth-store";
 
 export interface PatientMedical {
   allergies: string[];
@@ -53,6 +54,7 @@ interface PatientStore {
   updateMedical: (patientId: string, medical: PatientMedical) => void;
 }
 
+function uid() { return useAuthStore.getState().user?.id; }
 function toLocal(row: any): FullPatient {
   return {
     id: row.id, firstName: row.first_name, lastName: row.last_name,
@@ -84,12 +86,14 @@ export const usePatientStore = create<PatientStore>((set, get) => ({
       dentalRecords: [], documents: [],
     };
     set((s) => ({ patients: [patient, ...s.patients] }));
+    const userId = (await supabase.auth.getUser()).data.user?.id;
     supabase.from("patients").insert({
+      user_id: userId,
       id, first_name: data.firstName, last_name: data.lastName,
       date_of_birth: data.dateOfBirth, phone: data.phone, email: data.email,
       gender: data.gender, address: data.address, companion: data.companion,
       status: data.status, allergies: data.allergies || [],
-      last_visit: data.lastVisit, balance: data.balance || 0,
+      last_visit: data.lastVisit, balance: data.balance || 0, user_id: uid(),
     }).then();
     return patient;
   },
