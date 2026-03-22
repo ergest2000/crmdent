@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { supabase } from "@/integrations/supabase/client";
+import { persist } from "zustand/middleware";
 
 export interface Product {
   id: string;
@@ -21,62 +21,39 @@ interface ProductStore {
   deleteProduct: (id: string) => Promise<void>;
 }
 
-export const useProductStore = create<ProductStore>((set, get) => {
-  // Set up realtime subscription
-  supabase
-    .channel("products-realtime")
-    .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
-      get().fetchProducts();
-    })
-    .subscribe();
+export const useProductStore = create<ProductStore>()(
+  persist(
+    (set) => ({
+      products: [],
+      loading: false,
 
-  return {
-  products: [],
-  loading: false,
+      fetchProducts: async () => {
+        set({ loading: false });
+      },
 
-  fetchProducts: async () => {
-    set({ loading: true });
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
+      addProduct: async (productData) => {
+        const now = new Date().toISOString();
+        const product: Product = {
+          ...productData,
+          id: `PRD-${Date.now()}`,
+          created_at: now,
+          updated_at: now,
+        };
+        set((s) => ({ products: [product, ...s.products] }));
+      },
 
-    if (!error && data) {
-      set({ products: data as Product[], loading: false });
-    } else {
-      set({ loading: false });
-    }
-  },
+      updateProduct: async (id, updates) => {
+        set((s) => ({
+          products: s.products.map((p) =>
+            p.id === id ? { ...p, ...updates, updated_at: new Date().toISOString() } : p
+          ),
+        }));
+      },
 
-  addProduct: async (productData) => {
-    const { data, error } = await supabase
-      .from("products")
-      .insert(productData)
-      .select()
-      .single();
-
-    if (!error && data) {
-      set((s) => ({ products: [data as Product, ...s.products] }));
-    }
-  },
-
-  updateProduct: async (id, updates) => {
-    const { error } = await supabase
-      .from("products")
-      .update(updates)
-      .eq("id", id);
-
-    if (!error) {
-      set((s) => ({
-        products: s.products.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-      }));
-    }
-  },
-
-  deleteProduct: async (id) => {
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (!error) {
-      set((s) => ({ products: s.products.filter((p) => p.id !== id) }));
-    }
-  },
-}});
+      deleteProduct: async (id) => {
+        set((s) => ({ products: s.products.filter((p) => p.id !== id) }));
+      },
+    }),
+    { name: "products-storage" }
+  )
+);

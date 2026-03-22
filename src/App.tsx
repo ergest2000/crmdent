@@ -4,6 +4,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
+import { useEffect } from "react";
+import { usePatientStore } from "@/stores/patient-store";
+import { useDoctorStore } from "@/stores/doctor-store";
+import { useAppointmentStore } from "@/stores/appointment-store";
+import { useTreatmentStore } from "@/stores/treatment-store";
+import { useStaffStore } from "@/stores/staff-store";
+import { useProductStore } from "@/stores/product-store";
 import Dashboard from "./pages/Dashboard";
 import InboxPage from "./pages/Inbox";
 import Patients from "./pages/Patients";
@@ -25,11 +32,32 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+function DataLoader() {
+  const fetchPatients = usePatientStore((s) => s.fetchPatients);
+  const fetchDoctors = useDoctorStore((s) => s.fetchDoctors);
+  const fetchAppointments = useAppointmentStore((s) => s.fetchAppointments);
+  const fetchTreatments = useTreatmentStore((s) => s.fetchTreatments);
+  const fetchStaff = useStaffStore((s) => s.fetchStaff);
+  const fetchProducts = useProductStore((s) => s.fetchProducts);
+
+  useEffect(() => {
+    fetchPatients();
+    fetchDoctors();
+    fetchAppointments();
+    fetchTreatments();
+    fetchStaff();
+    fetchProducts();
+  }, []);
+
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <DataLoader />
       <HashRouter>
         <Routes>
           <Route element={<AppLayout />}>

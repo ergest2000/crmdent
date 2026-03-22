@@ -1,18 +1,8 @@
 import { create } from "zustand";
+import { supabase } from "@/integrations/supabase/client";
 
-export interface DoctorSchedule {
-  day: string;
-  start: string;
-  end: string;
-}
-
-export interface BlockedSlot {
-  id: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  reason: string;
-}
+export interface DoctorSchedule { day: string; start: string; end: string; }
+export interface BlockedSlot { id: string; date: string; startTime: string; endTime: string; reason: string; }
 
 export interface Doctor {
   id: string;
@@ -31,6 +21,8 @@ export interface Doctor {
 
 interface DoctorStore {
   doctors: Doctor[];
+  loading: boolean;
+  fetchDoctors: () => Promise<void>;
   addDoctor: (data: Omit<Doctor, "id" | "stats" | "blockedSlots">) => void;
   updateDoctor: (id: string, data: Partial<Doctor>) => void;
   deleteDoctor: (id: string) => void;
@@ -38,82 +30,83 @@ interface DoctorStore {
   removeBlockedSlot: (doctorId: string, slotId: string) => void;
 }
 
-const defaultDoctors: Doctor[] = [
-  {
-    id: "DOC-001",
-    firstName: "Albana",
-    lastName: "Shala",
-    specialization: "Endodontics",
-    phone: "+355 69 111 2233",
-    email: "a.shala@denteos.com",
-    status: "active",
-    joinDate: "2020-06-15",
-    schedule: [
-      { day: "E hënë", start: "08:00", end: "16:00" },
-      { day: "E martë", start: "08:00", end: "16:00" },
-      { day: "E mërkurë", start: "08:00", end: "14:00" },
-      { day: "E enjte", start: "08:00", end: "16:00" },
-      { day: "E premte", start: "08:00", end: "14:00" },
-      { day: "E shtunë", start: "09:00", end: "13:00" },
-    ],
-    blockedSlots: [],
-    stats: { patients: 142, treatments: 128, rating: 4.8 },
-  },
-  {
-    id: "DOC-002",
-    firstName: "Luan",
-    lastName: "Beka",
-    specialization: "Surgery & Prosthetics",
-    phone: "+355 69 222 3344",
-    email: "l.beka@denteos.com",
-    status: "active",
-    joinDate: "2021-02-01",
-    schedule: [
-      { day: "E hënë", start: "09:00", end: "17:00" },
-      { day: "E martë", start: "09:00", end: "17:00" },
-      { day: "E mërkurë", start: "09:00", end: "17:00" },
-      { day: "E enjte", start: "09:00", end: "17:00" },
-      { day: "E premte", start: "09:00", end: "15:00" },
-    ],
-    blockedSlots: [],
-    stats: { patients: 118, treatments: 105, rating: 4.6 },
-  },
-];
+function toLocal(row: any): Doctor {
+  return {
+    id: row.id, firstName: row.first_name, lastName: row.last_name,
+    specialization: row.specialization, phone: row.phone, email: row.email,
+    profilePhoto: row.profile_photo, status: row.status, joinDate: row.join_date || "",
+    schedule: row.schedule || [], blockedSlots: row.blocked_slots || [],
+    stats: row.stats || { patients: 0, treatments: 0, rating: 0 },
+  };
+}
 
 export const useDoctorStore = create<DoctorStore>((set) => ({
-  doctors: defaultDoctors,
+  doctors: [],
+  loading: false,
+
+  fetchDoctors: async () => {
+    set({ loading: true });
+    const { data } = await supabase.from("doctors").select("*").order("created_at");
+    if (data) set({ doctors: data.map(toLocal), loading: false });
+    else set({ loading: false });
+  },
 
   addDoctor: (data) => {
     const id = `DOC-${Date.now()}`;
-    set((s) => ({
-      doctors: [...s.doctors, { ...data, id, blockedSlots: [], stats: { patients: 0, treatments: 0, rating: 0 } }],
-    }));
+    const doc: Doctor = { ...data, id, blockedSlots: [], stats: { patients: 0, treatments: 0, rating: 0 } };
+    set((s) => ({ doctors: [...s.doctors, doc] }));
+    supabase.from("doctors").insert({
+      id, first_name: data.firstName, last_name: data.lastName,
+      specialization: data.specialization, phone: data.phone, email: data.email,
+      profile_photo: data.profilePhoto, status: data.status, join_date: data.joinDate,
+      schedule: data.schedule, blocked_slots: [], stats: { patients: 0, treatments: 0, rating: 0 },
+    }).then();
   },
 
   updateDoctor: (id, data) => {
-    set((s) => ({
-      doctors: s.doctors.map((d) => (d.id === id ? { ...d, ...data } : d)),
-    }));
+    set((s) => ({ doctors: s.doctors.map((d) => (d.id === id ? { ...d, ...data } : d)) }));
+    const dbData: any = {};
+    if (data.firstName) dbData.first_name = data.firstName;
+    if (data.lastName) dbData.last_name = data.lastName;
+    if (data.specialization) dbData.specialization = data.specialization;
+    if (data.phone) dbData.phone = data.phone;
+    if (data.email) dbData.email = data.email;
+    if (data.profilePhoto !== undefined) dbData.profile_photo = data.profilePhoto;
+    if (data.status) dbData.status = data.status;
+    if (data.schedule) dbData.schedule = data.schedule;
+    if (data.blockedSlots) dbData.blocked_slots = data.blockedSlots;
+    supabase.from("doctors").update(dbData).eq("id", id).then();
   },
 
   deleteDoctor: (id) => {
     set((s) => ({ doctors: s.doctors.filter((d) => d.id !== id) }));
+    supabase.from("doctors").delete().eq("id", id).then();
   },
 
   addBlockedSlot: (doctorId, slot) => {
     const slotWithId = { ...slot, id: `BLK-${Date.now()}` };
     set((s) => ({
-      doctors: s.doctors.map((d) =>
-        d.id === doctorId ? { ...d, blockedSlots: [...d.blockedSlots, slotWithId] } : d
-      ),
+      doctors: s.doctors.map((d) => {
+        if (d.id === doctorId) {
+          const updated = { ...d, blockedSlots: [...d.blockedSlots, slotWithId] };
+          supabase.from("doctors").update({ blocked_slots: updated.blockedSlots }).eq("id", doctorId).then();
+          return updated;
+        }
+        return d;
+      }),
     }));
   },
 
   removeBlockedSlot: (doctorId, slotId) => {
     set((s) => ({
-      doctors: s.doctors.map((d) =>
-        d.id === doctorId ? { ...d, blockedSlots: d.blockedSlots.filter((b) => b.id !== slotId) } : d
-      ),
+      doctors: s.doctors.map((d) => {
+        if (d.id === doctorId) {
+          const updated = { ...d, blockedSlots: d.blockedSlots.filter((b) => b.id !== slotId) };
+          supabase.from("doctors").update({ blocked_slots: updated.blockedSlots }).eq("id", doctorId).then();
+          return updated;
+        }
+        return d;
+      }),
     }));
   },
 }));
