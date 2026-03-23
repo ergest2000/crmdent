@@ -1,81 +1,56 @@
 import {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  Stethoscope,
-  Receipt,
-  Wallet,
-  BarChart3,
-  Megaphone,
-  UserCog,
-  Settings,
-  Inbox,
-  Shield,
-  UserPlus,
-  Package,
-  HeartPulse,
-  LogOut,
+  LayoutDashboard, Users, Calendar, Stethoscope, Receipt, Wallet, BarChart3,
+  UserCog, Settings, Shield, UserPlus, Package, HeartPulse, LogOut, Building2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth-store";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-  useSidebar,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
 
-const mainNav = [
-  { title: "Paneli", url: "/", icon: LayoutDashboard },
-  { title: "Leads", url: "/leads", icon: UserPlus },
-  { title: "Pacientët", url: "/patients", icon: Users },
-  { title: "Dentistë", url: "/doctors", icon: HeartPulse },
-  { title: "Kalendari i Takimeve", url: "/appointments", icon: Calendar },
-  { title: "Trajtimet", url: "/treatments", icon: Stethoscope },
-];
+const allNavItems = {
+  dashboard: { title: "Paneli", url: "/", icon: LayoutDashboard },
+  leads: { title: "Leads", url: "/leads", icon: UserPlus },
+  patients: { title: "Pacientët", url: "/patients", icon: Users },
+  doctors: { title: "Dentistë", url: "/doctors", icon: HeartPulse },
+  appointments: { title: "Kalendari i Takimeve", url: "/appointments", icon: Calendar },
+  treatments: { title: "Trajtimet", url: "/treatments", icon: Stethoscope },
+  finance: { title: "Financa", url: "/finance", icon: Wallet },
+  invoices: { title: "Faturat", url: "/invoices", icon: Receipt },
+  stock: { title: "Stoku i Produkteve", url: "/stock", icon: Package },
+  reports: { title: "Raporte", url: "/reports", icon: BarChart3 },
+  admin: { title: "Admin", url: "/admin", icon: Shield },
+  staff: { title: "Stafi", url: "/staff", icon: UserCog },
+  settings: { title: "Cilësimet", url: "/settings", icon: Settings },
+};
 
-const financeNav = [
-  { title: "Financa", url: "/finance", icon: Wallet },
-  { title: "Faturat", url: "/invoices", icon: Receipt },
-  { title: "Stoku i Produkteve", url: "/stock", icon: Package },
-  { title: "Raporte", url: "/reports", icon: BarChart3 },
-];
+const roleLabels: Record<string, string> = {
+  super_admin: "Super Admin",
+  clinic_admin: "Admin Klinike",
+  doctor: "Doktor",
+  receptionist: "Recepsionist",
+  accountant: "Kontabilist",
+  economist: "Ekonomist",
+  manager: "Menaxher",
+};
 
-const adminNav = [
-  { title: "Admin", url: "/admin", icon: Shield },
-  { title: "Stafi", url: "/staff", icon: UserCog },
-  { title: "Cilësimet", url: "/settings", icon: Settings },
-];
-
-function NavGroup({ label, items }: { label: string; items: typeof mainNav }) {
+function NavGroup({ label, items }: { label: string; items: { title: string; url: string; icon: any }[] }) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  if (items.length === 0) return null;
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-        {label}
-      </SidebarGroupLabel>
+      <SidebarGroupLabel className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">{label}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild isActive={location.pathname === item.url}>
-                <NavLink
-                  to={item.url}
-                  end
-                  className="flex items-center gap-3 rounded-inner px-3 py-1.5 text-sm text-sidebar-foreground/80 transition-all duration-150 hover:bg-sidebar-accent"
-                  activeClassName="bg-sidebar-accent text-foreground font-medium"
-                >
+                <NavLink to={item.url} end className="flex items-center gap-3 rounded-inner px-3 py-1.5 text-sm text-sidebar-foreground/80 transition-all duration-150 hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent text-foreground font-medium">
                   <item.icon className="h-4 w-4 shrink-0" />
                   {!collapsed && <span>{item.title}</span>}
                 </NavLink>
@@ -93,14 +68,22 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const profile = useAuthStore((s) => s.profile);
   const logout = useAuthStore((s) => s.logout);
+  const hasPermission = useAuthStore((s) => s.hasPermission);
+  const isSuperAdmin = useAuthStore((s) => s.isSuperAdmin);
+
+  const filterItems = (keys: string[]) => keys.filter((k) => hasPermission(k)).map((k) => (allNavItems as any)[k]).filter(Boolean);
+
+  const mainNav = filterItems(["dashboard", "leads", "patients", "doctors", "appointments", "treatments"]);
+  const financeNav = filterItems(["finance", "invoices", "stock", "reports"]);
+  const adminNav = filterItems(["admin", "staff", "settings"]);
+
+  const superAdminNav = isSuperAdmin() ? [{ title: "Menaxho Klinikat", url: "/super-admin", icon: Building2 }] : [];
 
   return (
     <Sidebar collapsible="icon" className="shadow-[inset_-1px_0_0_0_rgba(0,0,0,0.05)]">
       <SidebarHeader className="px-4 py-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-inner bg-primary text-primary-foreground text-sm font-semibold">
-            D
-          </div>
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-inner bg-primary text-primary-foreground text-sm font-semibold">D</div>
           {!collapsed && (
             <div>
               <p className="text-sm font-semibold text-foreground">DenteOS</p>
@@ -110,9 +93,10 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent className="px-2">
+        {superAdminNav.length > 0 && <NavGroup label="Platform" items={superAdminNav} />}
         <NavGroup label="Kryesore" items={mainNav} />
-        <NavGroup label="Financa" items={financeNav} />
-        <NavGroup label="Admin" items={adminNav} />
+        {financeNav.length > 0 && <NavGroup label="Financa" items={financeNav} />}
+        {adminNav.length > 0 && <NavGroup label="Admin" items={adminNav} />}
       </SidebarContent>
       <SidebarFooter className="px-3 py-3 space-y-2">
         {!collapsed && profile && (
@@ -122,20 +106,15 @@ export function AppSidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-foreground truncate">{profile.full_name || profile.email}</p>
-              <p className="text-[10px] text-muted-foreground truncate capitalize">{profile.role}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{roleLabels[profile.role] || profile.role}</p>
             </div>
           </div>
         )}
-        <button
-          onClick={() => logout()}
-          className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-        >
+        <button onClick={() => logout()} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors">
           <LogOut className="h-3.5 w-3.5" />
           {!collapsed && <span>Dil nga llogaria</span>}
         </button>
-        {!collapsed && (
-          <p className="text-[11px] text-muted-foreground px-1">© 2026 DenteOS v1.0</p>
-        )}
+        {!collapsed && <p className="text-[11px] text-muted-foreground px-1">© 2026 DenteOS v1.0</p>}
       </SidebarFooter>
     </Sidebar>
   );

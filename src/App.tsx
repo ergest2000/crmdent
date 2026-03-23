@@ -12,6 +12,10 @@ import { useAppointmentStore } from "@/stores/appointment-store";
 import { useTreatmentStore } from "@/stores/treatment-store";
 import { useStaffStore } from "@/stores/staff-store";
 import { useProductStore } from "@/stores/product-store";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import SuperAdminDashboard from "./pages/super-admin/SuperAdminDashboard";
 import Dashboard from "./pages/Dashboard";
 import Patients from "./pages/Patients";
 import PatientProfile from "./pages/PatientProfile";
@@ -28,13 +32,17 @@ import LeadsPage from "./pages/Leads";
 import StockPage from "./pages/Stock";
 import Doctors from "./pages/Doctors";
 import NotFound from "./pages/NotFound";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
 
 const queryClient = new QueryClient();
 
+function AuthInit() {
+  const initialize = useAuthStore((s) => s.initialize);
+  useEffect(() => { initialize(); }, []);
+  return null;
+}
+
 function DataLoader() {
+  const user = useAuthStore((s) => s.user);
   const fetchPatients = usePatientStore((s) => s.fetchPatients);
   const fetchDoctors = useDoctorStore((s) => s.fetchDoctors);
   const fetchAppointments = useAppointmentStore((s) => s.fetchAppointments);
@@ -43,63 +51,24 @@ function DataLoader() {
   const fetchProducts = useProductStore((s) => s.fetchProducts);
 
   useEffect(() => {
-    fetchPatients();
-    fetchDoctors();
-    fetchAppointments();
-    fetchTreatments();
-    fetchStaff();
-    fetchProducts();
-  }, []);
-
+    if (user) { fetchPatients(); fetchDoctors(); fetchAppointments(); fetchTreatments(); fetchStaff(); fetchProducts(); }
+  }, [user]);
   return null;
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, initialized } = useAuthStore();
-
-  if (!initialized || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-3">
-          <div className="flex h-10 w-10 mx-auto items-center justify-center rounded-xl bg-primary text-primary-foreground text-sm font-bold animate-pulse">D</div>
-          <p className="text-sm text-muted-foreground">Duke ngarkuar...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
+  const user = useAuthStore((s) => s.user);
+  const initialized = useAuthStore((s) => s.initialized);
+  if (!initialized) return <div className="min-h-screen flex items-center justify-center"><div className="text-center space-y-3"><div className="h-10 w-10 mx-auto rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold">D</div><p className="text-sm text-muted-foreground">Duke ngarkuar...</p></div></div>;
+  if (!user) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user, initialized } = useAuthStore();
-
-  if (!initialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-sm text-muted-foreground">Duke ngarkuar...</div>
-      </div>
-    );
-  }
-
-  if (user) {
-    return <Navigate to="/" replace />;
-  }
-
-  return <>{children}</>;
-}
-
-function AuthInitializer({ children }: { children: React.ReactNode }) {
-  const initialize = useAuthStore((s) => s.initialize);
-
-  useEffect(() => {
-    initialize();
-  }, []);
-
+  const user = useAuthStore((s) => s.user);
+  const initialized = useAuthStore((s) => s.initialized);
+  if (!initialized) return null;
+  if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -109,34 +78,32 @@ const App = () => (
       <Toaster />
       <Sonner />
       <HashRouter>
-        <AuthInitializer>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-            <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-            <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-
-            {/* Protected routes */}
-            <Route element={<ProtectedRoute><DataLoader /><AppLayout /></ProtectedRoute>}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/leads" element={<LeadsPage />} />
-              <Route path="/patients" element={<Patients />} />
-              <Route path="/doctors" element={<Doctors />} />
-              <Route path="/patients/:id" element={<PatientProfile />} />
-              <Route path="/patients/:id/intake" element={<PatientIntakeForm />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/treatments" element={<Treatments />} />
-              <Route path="/finance" element={<Finance />} />
-              <Route path="/invoices" element={<Invoices />} />
-              <Route path="/stock" element={<StockPage />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/staff" element={<Staff />} />
-              <Route path="/settings" element={<SettingsPage />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthInitializer>
+        <AuthInit />
+        <DataLoader />
+        <Routes>
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+          <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/super-admin" element={<SuperAdminDashboard />} />
+            <Route path="/leads" element={<LeadsPage />} />
+            <Route path="/patients" element={<Patients />} />
+            <Route path="/doctors" element={<Doctors />} />
+            <Route path="/patients/:id" element={<PatientProfile />} />
+            <Route path="/patients/:id/intake" element={<PatientIntakeForm />} />
+            <Route path="/appointments" element={<Appointments />} />
+            <Route path="/treatments" element={<Treatments />} />
+            <Route path="/finance" element={<Finance />} />
+            <Route path="/invoices" element={<Invoices />} />
+            <Route path="/stock" element={<StockPage />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/staff" element={<Staff />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </HashRouter>
     </TooltipProvider>
   </QueryClientProvider>

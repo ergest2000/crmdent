@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { UserPlus, Eye, EyeOff } from "lucide-react";
 
@@ -11,7 +10,6 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState("client");
   const [showPass, setShowPass] = useState(false);
   const register = useAuthStore((s) => s.register);
   const loading = useAuthStore((s) => s.loading);
@@ -23,7 +21,7 @@ export default function Register() {
       toast({ title: "Gabim", description: "Fjalëkalimi duhet të jetë të paktën 6 karaktere", variant: "destructive" });
       return;
     }
-    const { error } = await register(email, password, fullName, role);
+    const { error } = await register(email, password, fullName, "clinic_admin");
     if (error) {
       toast({ title: "Gabim", description: error, variant: "destructive" });
     } else {
@@ -41,7 +39,7 @@ export default function Register() {
               <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">D</div>
             </div>
             <h1 className="text-xl font-semibold text-foreground">Krijo Llogari</h1>
-            <p className="text-sm text-muted-foreground">Regjistrohu në DenteOS</p>
+            <p className="text-sm text-muted-foreground">Regjistrohu si Admin Klinike në DenteOS</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -61,16 +59,6 @@ export default function Register() {
                   {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Roli</label>
-              <Select value={role} onValueChange={setRole}>
-                <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="client">Klient</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <Button type="submit" className="w-full h-10 gap-2" disabled={loading}>
               <UserPlus className="h-4 w-4" /> {loading ? "Duke u regjistruar..." : "Regjistrohu"}
