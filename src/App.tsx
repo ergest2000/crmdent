@@ -16,6 +16,8 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import SuperAdminDashboard from "./pages/super-admin/SuperAdminDashboard";
+import SuperAdminAnalytics from "./pages/super-admin/SuperAdminAnalytics";
+import SuperAdminUsers from "./pages/super-admin/SuperAdminUsers";
 import Dashboard from "./pages/Dashboard";
 import Patients from "./pages/Patients";
 import PatientProfile from "./pages/PatientProfile";
@@ -72,6 +74,14 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function RoleBasedDashboard() {
+  const profile = useAuthStore((s) => s.profile);
+  if (profile?.role === "super_admin") {
+    return <Navigate to="/super-admin" replace />;
+  }
+  return <Dashboard />;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -85,8 +95,10 @@ const App = () => (
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
           <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<RoleBasedDashboard />} />
             <Route path="/super-admin" element={<SuperAdminDashboard />} />
+            <Route path="/super-admin/analytics" element={<SuperAdminAnalytics />} />
+            <Route path="/super-admin/users" element={<SuperAdminUsers />} />
             <Route path="/leads" element={<LeadsPage />} />
             <Route path="/patients" element={<Patients />} />
             <Route path="/doctors" element={<Doctors />} />

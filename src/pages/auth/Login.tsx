@@ -20,6 +20,7 @@ export default function Login() {
     if (error) {
       toast({ title: "Gabim", description: error, variant: "destructive" });
     } else {
+      // RoleBasedDashboard at "/" will handle the redirect
       navigate("/");
     }
   };

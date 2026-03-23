@@ -1,6 +1,7 @@
 import {
   LayoutDashboard, Users, Calendar, Stethoscope, Receipt, Wallet, BarChart3,
   UserCog, Settings, Shield, UserPlus, Package, HeartPulse, LogOut, Building2,
+  Activity, Globe,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -10,7 +11,8 @@ import {
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
 
-const allNavItems = {
+/* ── Clinic-level nav items ── */
+const clinicNavItems = {
   dashboard: { title: "Paneli", url: "/", icon: LayoutDashboard },
   leads: { title: "Leads", url: "/leads", icon: UserPlus },
   patients: { title: "Pacientët", url: "/patients", icon: Users },
@@ -25,6 +27,13 @@ const allNavItems = {
   staff: { title: "Stafi", url: "/staff", icon: UserCog },
   settings: { title: "Cilësimet", url: "/settings", icon: Settings },
 };
+
+/* ── Super Admin nav items ── */
+const superAdminNavItems = [
+  { title: "Dashboard Global", url: "/super-admin", icon: Globe },
+  { title: "Analytics", url: "/super-admin/analytics", icon: Activity },
+  { title: "Përdoruesit", url: "/super-admin/users", icon: Users },
+];
 
 const roleLabels: Record<string, string> = {
   super_admin: "Super Admin",
@@ -71,13 +80,15 @@ export function AppSidebar() {
   const hasPermission = useAuthStore((s) => s.hasPermission);
   const isSuperAdmin = useAuthStore((s) => s.isSuperAdmin);
 
-  const filterItems = (keys: string[]) => keys.filter((k) => hasPermission(k)).map((k) => (allNavItems as any)[k]).filter(Boolean);
+  const filterItems = (keys: string[]) =>
+    keys.filter((k) => hasPermission(k)).map((k) => (clinicNavItems as any)[k]).filter(Boolean);
 
-  const mainNav = filterItems(["dashboard", "leads", "patients", "doctors", "appointments", "treatments"]);
-  const financeNav = filterItems(["finance", "invoices", "stock", "reports"]);
-  const adminNav = filterItems(["admin", "staff", "settings"]);
+  const isSA = isSuperAdmin();
 
-  const superAdminNav = isSuperAdmin() ? [{ title: "Menaxho Klinikat", url: "/super-admin", icon: Building2 }] : [];
+  // Super admin: show global-only nav; Clinic roles: show clinic nav
+  const mainNav = isSA ? [] : filterItems(["dashboard", "leads", "patients", "doctors", "appointments", "treatments"]);
+  const financeNav = isSA ? [] : filterItems(["finance", "invoices", "stock", "reports"]);
+  const adminNav = isSA ? [] : filterItems(["admin", "staff", "settings"]);
 
   return (
     <Sidebar collapsible="icon" className="shadow-[inset_-1px_0_0_0_rgba(0,0,0,0.05)]">
@@ -87,16 +98,21 @@ export function AppSidebar() {
           {!collapsed && (
             <div>
               <p className="text-sm font-semibold text-foreground">DenteOS</p>
-              <p className="text-[11px] text-muted-foreground">Klinika Dentare</p>
+              <p className="text-[11px] text-muted-foreground">
+                {isSA ? "Super Admin Panel" : "Klinika Dentare"}
+              </p>
             </div>
           )}
         </div>
       </SidebarHeader>
       <SidebarContent className="px-2">
-        {superAdminNav.length > 0 && <NavGroup label="Platform" items={superAdminNav} />}
-        <NavGroup label="Kryesore" items={mainNav} />
-        {financeNav.length > 0 && <NavGroup label="Financa" items={financeNav} />}
-        {adminNav.length > 0 && <NavGroup label="Admin" items={adminNav} />}
+        {/* Super Admin navigation */}
+        {isSA && <NavGroup label="Platform" items={superAdminNavItems} />}
+
+        {/* Clinic-level navigation */}
+        {!isSA && <NavGroup label="Kryesore" items={mainNav} />}
+        {!isSA && financeNav.length > 0 && <NavGroup label="Financa" items={financeNav} />}
+        {!isSA && adminNav.length > 0 && <NavGroup label="Admin" items={adminNav} />}
       </SidebarContent>
       <SidebarFooter className="px-3 py-3 space-y-2">
         {!collapsed && profile && (

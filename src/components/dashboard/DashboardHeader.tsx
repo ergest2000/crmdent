@@ -3,6 +3,7 @@ import { Search, Plus, Bell, Settings, Check, Calendar, UserPlus, Receipt, Packa
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/stores/auth-store";
 import {
   Popover,
   PopoverContent,
@@ -41,12 +42,15 @@ const initialNotifications: Notification[] = [
 
 export function DashboardHeader() {
   const navigate = useNavigate();
+  const profile = useAuthStore((s) => s.profile);
   const now = new Date();
   const greeting = now.getHours() < 12 ? "Mirëmëngjesi" : now.getHours() < 18 ? "Mirëdita" : "Mirëmbrëma";
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [notifOpen, setNotifOpen] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const displayName = profile?.full_name || profile?.email || "Përdorues";
+  const initials = displayName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
 
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
@@ -133,11 +137,11 @@ export function DashboardHeader() {
           </Button>
           <div className="flex items-center gap-2 ml-2 pl-2 border-l border-border/50">
             <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-semibold">
-              AD
+              {initials}
             </div>
             <div className="hidden md:block">
-              <p className="text-sm font-medium text-foreground leading-none">Admin</p>
-              <p className="text-[10px] text-muted-foreground">Super admin</p>
+              <p className="text-sm font-medium text-foreground leading-none">{displayName}</p>
+              <p className="text-[10px] text-muted-foreground">{profile?.role === "super_admin" ? "Super Admin" : profile?.role === "clinic_admin" ? "Admin Klinike" : profile?.role || ""}</p>
             </div>
           </div>
         </div>
@@ -145,7 +149,7 @@ export function DashboardHeader() {
 
       {/* Greeting */}
       <div>
-        <h2 className="text-base font-semibold text-foreground">{greeting}, Admin!</h2>
+        <h2 className="text-base font-semibold text-foreground">{greeting}, {profile?.full_name?.split(" ")[0] || "Përdorues"}!</h2>
         <p className="text-sm text-muted-foreground">{formatDateAlbanian(now)}</p>
       </div>
     </div>
