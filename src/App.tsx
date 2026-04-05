@@ -22,7 +22,6 @@ import SettingsPage from "./pages/SettingsPage";
 import LeadsPage from "./pages/Leads";
 import StockPage from "./pages/Stock";
 import Doctors from "./pages/Doctors";
-import Tutorial from "./pages/Tutorial";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,7 +34,6 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/tutorial" element={<Tutorial />} />
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="leads" element={<LeadsPage />} />
