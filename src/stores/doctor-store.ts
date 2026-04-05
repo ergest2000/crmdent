@@ -57,13 +57,12 @@ export const useDoctorStore = create<DoctorStore>((set) => ({
     const id = `DOC-${Date.now()}`;
     const doc: Doctor = { ...data, id, blockedSlots: [], stats: { patients: 0, treatments: 0, rating: 0 } };
     set((s) => ({ doctors: [...s.doctors, doc] }));
-    const userId = (await supabase.auth.getUser()).data.user?.id;
     supabase.from("doctors").insert({
-      user_id: userId,
+      user_id: uid(),
       id, first_name: data.firstName, last_name: data.lastName,
       specialization: data.specialization, phone: data.phone, email: data.email,
       profile_photo: data.profilePhoto, status: data.status, join_date: data.joinDate,
-      schedule: data.schedule, blocked_slots: [], stats: { patients: 0, treatments: 0, rating: 0 }, user_id: uid(),
+      schedule: data.schedule, blocked_slots: [], stats: { patients: 0, treatments: 0, rating: 0 },
     }).then();
   },
 
