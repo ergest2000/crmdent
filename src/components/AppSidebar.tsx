@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Users, Calendar, Stethoscope, Receipt, Wallet, BarChart3,
-  UserCog, Settings, Shield, UserPlus, Package, HeartPulse, LogOut, Building2,
+  UserCog, Settings, Shield, UserPlus, Package, HeartPulse, LogOut,
   Activity, Globe,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -75,17 +75,18 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const profile = useAuthStore((s) => s.profile);
   const logout = useAuthStore((s) => s.logout);
-  const hasPermission = useAuthStore((s) => s.hasPermission);
   const isSuperAdmin = useAuthStore((s) => s.isSuperAdmin);
-
-  const filterItems = (keys: string[]) =>
-    keys.filter((k) => hasPermission(k)).map((k) => (clinicNavItems as any)[k]).filter(Boolean);
 
   const isSA = isSuperAdmin();
 
-  const mainNav = isSA ? [] : filterItems(["dashboard", "leads", "patients", "doctors", "appointments", "treatments"]);
-  const financeNav = isSA ? [] : filterItems(["finance", "invoices", "stock", "reports"]);
-  const adminNav = isSA ? [] : filterItems(["admin", "staff", "settings"]);
+  // Show all items — permissions checked by routes
+  const allKeys = ["dashboard", "leads", "patients", "doctors", "appointments", "treatments"];
+  const financeKeys = ["finance", "invoices", "stock", "reports"];
+  const adminKeys = ["admin", "staff", "settings"];
+
+  const mainNav = isSA ? [] : allKeys.map((k) => (clinicNavItems as any)[k]);
+  const financeNav = isSA ? [] : financeKeys.map((k) => (clinicNavItems as any)[k]);
+  const adminNav = isSA ? [] : adminKeys.map((k) => (clinicNavItems as any)[k]);
 
   return (
     <Sidebar collapsible="icon" className="shadow-[inset_-1px_0_0_0_rgba(0,0,0,0.05)]">
@@ -105,8 +106,8 @@ export function AppSidebar() {
       <SidebarContent className="px-2">
         {isSA && <NavGroup label="Platform" items={superAdminNavItems} />}
         {!isSA && <NavGroup label="Kryesore" items={mainNav} />}
-        {!isSA && financeNav.length > 0 && <NavGroup label="Financa" items={financeNav} />}
-        {!isSA && adminNav.length > 0 && <NavGroup label="Admin" items={adminNav} />}
+        {!isSA && <NavGroup label="Financa" items={financeNav} />}
+        {!isSA && <NavGroup label="Admin" items={adminNav} />}
       </SidebarContent>
       <SidebarFooter className="px-3 py-3 space-y-2">
         {!collapsed && profile && (
