@@ -27,7 +27,11 @@ interface AppointmentStore {
 }
 
 function toLocal(row: any): Appointment {
-  return { id: row.id, patientId: row.patient_id, patientName: row.patient_name, date: row.date, time: row.time, treatment: row.treatment, dentist: row.dentist, status: row.status, notes: row.notes, duration: row.duration };
+  return {
+    id: row.id, patientId: row.patient_id, patientName: row.patient_name,
+    date: row.date, time: row.time, treatment: row.treatment,
+    dentist: row.dentist, status: row.status, notes: row.notes, duration: row.duration,
+  };
 }
 
 function uid() { return useAuthStore.getState().user?.id; }
@@ -46,13 +50,12 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
   addAppointment: (data) => {
     const apt: Appointment = { ...data, id: `APT-${Date.now()}` };
     set((s) => ({ appointments: [...s.appointments, apt] }));
-    supabase.auth.getUser().then(({data}) => { const userId = data.user?.id;
     supabase.from("appointments").insert({
-      user_id: userId,
+      user_id: uid(),
       id: apt.id, patient_id: apt.patientId, patient_name: apt.patientName,
       date: apt.date, time: apt.time, treatment: apt.treatment,
       dentist: apt.dentist, status: apt.status, notes: apt.notes,
-      duration: apt.duration || 30, user_id: uid(),
+      duration: apt.duration || 30,
     }).then();
     return apt;
   },
