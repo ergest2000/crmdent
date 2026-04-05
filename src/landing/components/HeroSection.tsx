@@ -1,5 +1,5 @@
 import { useLanguage } from "../contexts/LanguageContext";
-import dashboardImg from "../dashboard-crm.png";
+import dashboardImg from "../dashboard-crm.jpg";
 
 const HeroSection = () => {
   const { t } = useLanguage();
