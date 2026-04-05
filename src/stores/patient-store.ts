@@ -86,14 +86,14 @@ export const usePatientStore = create<PatientStore>((set, get) => ({
       dentalRecords: [], documents: [],
     };
     set((s) => ({ patients: [patient, ...s.patients] }));
-    const userId = (await supabase.auth.getUser()).data.user?.id;
+    const userId = uid();
     supabase.from("patients").insert({
       user_id: userId,
       id, first_name: data.firstName, last_name: data.lastName,
       date_of_birth: data.dateOfBirth, phone: data.phone, email: data.email,
       gender: data.gender, address: data.address, companion: data.companion,
       status: data.status, allergies: data.allergies || [],
-      last_visit: data.lastVisit, balance: data.balance || 0, user_id: uid(),
+      last_visit: data.lastVisit, balance: data.balance || 0,
     }).then();
     return patient;
   },
