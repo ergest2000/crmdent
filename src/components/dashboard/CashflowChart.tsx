@@ -49,7 +49,6 @@ export function CashflowChart() {
         <h3 className="text-sm font-medium text-foreground">Të ardhura</h3>
         <CardDateFilter value={preset} dateRange={dateRange} onChange={change} />
       </div>
-
       <div className="mb-3">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Totali i të ardhurave</p>
         <div className="flex items-baseline gap-2">
@@ -62,7 +61,6 @@ export function CashflowChart() {
           </span>
         </div>
       </div>
-
       <ResponsiveContainer width="100%" height={180}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -72,7 +70,7 @@ export function CashflowChart() {
             contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, boxShadow: "var(--shadow-elevated)" }}
             formatter={(value: number) => [`€${value.toLocaleString()}`, "Total"]}
           />
-          <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "hsl(var(--primary))" }} animationDuration={600} />
+          <Line type="linear" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "hsl(var(--primary))" }} animationDuration={600} />
         </LineChart>
       </ResponsiveContainer>
     </motion.div>
