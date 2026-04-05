@@ -1,11 +1,9 @@
 import { useLanguage } from "../contexts/LanguageContext";
-import dashboardImg from "../../dashboard-crm.jpg";
 
 const HeroSection = () => {
   const { t } = useLanguage();
   return (
     <section className="relative overflow-hidden bg-background">
-      {/* Grid mesh background */}
       <div className="absolute inset-0 pointer-events-none">
         <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -55,7 +53,7 @@ const HeroSection = () => {
                 </div>
               </div>
               <img
-                src={dashboardImg}
+                src="/dashboard-new.jpg"
                 alt="DenteOS Dashboard"
                 className="w-full h-auto"
               />
