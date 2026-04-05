@@ -1,9 +1,8 @@
-import { useLanguage } from "@/contexts/LanguageContext";
-import dashboardImg from "@/assets/dashboard-crm.jpg";
+import { useLanguage } from "../contexts/LanguageContext";
+import dashboardImg from "../../dashboard-crm.jpg";
 
 const HeroSection = () => {
   const { t } = useLanguage();
-
   return (
     <section className="relative overflow-hidden bg-background">
       {/* Grid mesh background */}
@@ -26,27 +25,20 @@ const HeroSection = () => {
           <rect width="100%" height="100%" fill="url(#hero-grid)" mask="url(#grid-mask)" />
         </svg>
       </div>
-
-      {/* Subtle accent circles */}
       <div className="absolute top-[-120px] left-[-80px] w-[400px] h-[400px] rounded-full bg-primary/[0.04] blur-[80px] pointer-events-none" />
       <div className="absolute top-[10%] right-[-60px] w-[300px] h-[300px] rounded-full bg-primary/[0.05] blur-[80px] pointer-events-none" />
-
-      {/* Hero content */}
       <div className="relative z-10 flex flex-col items-center pt-24 sm:pt-28 md:pt-36 px-4 sm:px-6">
         <h1 className="text-center text-3xl sm:text-4xl md:text-5xl lg:text-[4.2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground animate-fade-in font-heading">
           {t.hero.title1}<br />
           {t.hero.title2}{" "}
           <span className="italic text-primary font-light" style={{ fontFamily: "'Playfair Display', serif" }}>{t.hero.title3}</span>
         </h1>
-
         <p
           className="mt-5 sm:mt-6 max-w-[520px] text-center text-sm sm:text-base md:text-lg font-light text-muted-foreground leading-relaxed animate-fade-in"
           style={{ animationDelay: "0.2s", animationFillMode: "both" }}
         >
           {t.hero.subtitle}
         </p>
-
-        {/* Dashboard Screenshot */}
         <div className="mt-12 sm:mt-16 md:mt-20 mb-[-2rem] sm:mb-[-4rem] w-full max-w-5xl animate-fade-in" style={{ animationDelay: "0.4s", animationFillMode: "both" }}>
           <div className="glass rounded-xl sm:rounded-2xl p-1.5 sm:p-2 shadow-xl shadow-primary/5">
             <div className="rounded-xl overflow-hidden border border-border bg-card">
@@ -58,13 +50,13 @@ const HeroSection = () => {
                 </div>
                 <div className="flex-1 flex justify-center">
                   <div className="hidden sm:block rounded-md bg-muted px-16 py-1 text-xs text-muted-foreground">
-                    app.dentacrm.com
+                    app.denteos.al
                   </div>
                 </div>
               </div>
               <img
                 src={dashboardImg}
-                alt="DentaCRM Dashboard"
+                alt="DenteOS Dashboard"
                 className="w-full h-auto"
               />
             </div>
