@@ -53,7 +53,7 @@ const HeroSection = () => {
                 </div>
               </div>
               <img
-                src="/dashboard-new.png"
+                src="/dashboard-new.jpg"
                 alt="DenteOS Dashboard"
                 className="w-full h-auto"
               />
