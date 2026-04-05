@@ -11,24 +11,22 @@ import {
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
 
-/* ── Clinic-level nav items ── */
 const clinicNavItems = {
-  dashboard: { title: "Paneli", url: "/", icon: LayoutDashboard },
-  leads: { title: "Leads", url: "/leads", icon: UserPlus },
-  patients: { title: "Pacientët", url: "/patients", icon: Users },
-  doctors: { title: "Dentistë", url: "/doctors", icon: HeartPulse },
-  appointments: { title: "Kalendari i Takimeve", url: "/appointments", icon: Calendar },
-  treatments: { title: "Trajtimet", url: "/treatments", icon: Stethoscope },
-  finance: { title: "Financa", url: "/finance", icon: Wallet },
-  invoices: { title: "Faturat", url: "/invoices", icon: Receipt },
-  stock: { title: "Stoku i Produkteve", url: "/stock", icon: Package },
-  reports: { title: "Raporte", url: "/reports", icon: BarChart3 },
-  admin: { title: "Admin", url: "/admin", icon: Shield },
-  staff: { title: "Stafi", url: "/staff", icon: UserCog },
-  settings: { title: "Cilësimet", url: "/settings", icon: Settings },
+  dashboard: { title: "Paneli", url: "/app", icon: LayoutDashboard },
+  leads: { title: "Leads", url: "/app/leads", icon: UserPlus },
+  patients: { title: "Pacientët", url: "/app/patients", icon: Users },
+  doctors: { title: "Dentistë", url: "/app/doctors", icon: HeartPulse },
+  appointments: { title: "Kalendari i Takimeve", url: "/app/appointments", icon: Calendar },
+  treatments: { title: "Trajtimet", url: "/app/treatments", icon: Stethoscope },
+  finance: { title: "Financa", url: "/app/finance", icon: Wallet },
+  invoices: { title: "Faturat", url: "/app/invoices", icon: Receipt },
+  stock: { title: "Stoku i Produkteve", url: "/app/stock", icon: Package },
+  reports: { title: "Raporte", url: "/app/reports", icon: BarChart3 },
+  admin: { title: "Admin", url: "/app/admin", icon: Shield },
+  staff: { title: "Stafi", url: "/app/staff", icon: UserCog },
+  settings: { title: "Cilësimet", url: "/app/settings", icon: Settings },
 };
 
-/* ── Super Admin nav items ── */
 const superAdminNavItems = [
   { title: "Dashboard Global", url: "/super-admin", icon: Globe },
   { title: "Analytics", url: "/super-admin/analytics", icon: Activity },
@@ -85,7 +83,6 @@ export function AppSidebar() {
 
   const isSA = isSuperAdmin();
 
-  // Super admin: show global-only nav; Clinic roles: show clinic nav
   const mainNav = isSA ? [] : filterItems(["dashboard", "leads", "patients", "doctors", "appointments", "treatments"]);
   const financeNav = isSA ? [] : filterItems(["finance", "invoices", "stock", "reports"]);
   const adminNav = isSA ? [] : filterItems(["admin", "staff", "settings"]);
@@ -106,10 +103,7 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent className="px-2">
-        {/* Super Admin navigation */}
         {isSA && <NavGroup label="Platform" items={superAdminNavItems} />}
-
-        {/* Clinic-level navigation */}
         {!isSA && <NavGroup label="Kryesore" items={mainNav} />}
         {!isSA && financeNav.length > 0 && <NavGroup label="Financa" items={financeNav} />}
         {!isSA && adminNav.length > 0 && <NavGroup label="Admin" items={adminNav} />}
