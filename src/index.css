@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,500;1,600;1,700&family=Geist+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,71 +6,76 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 205 50% 97%;
+    --hero-background: 205 60% 95%;
+    --foreground: 215 25% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 215 25% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 215 25% 15%;
 
-    --primary: 173 80% 30%;
+    --primary: 199 89% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 210 20% 93%;
+    --secondary-foreground: 215 25% 25%;
 
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 15% 45%;
 
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --accent: 199 50% 92%;
+    --accent-foreground: 199 70% 35%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 173 80% 30%;
+    --border: 210 20% 88%;
+    --input: 210 20% 88%;
+    --ring: 199 89% 48%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
 
-    --sidebar-background: 210 20% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 173 80% 30%;
+    --sidebar-background: 205 50% 97%;
+    --sidebar-foreground: 215 25% 25%;
+    --sidebar-primary: 199 89% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 240 5.9% 90%;
-    --sidebar-ring: 173 80% 30%;
+    --sidebar-accent: 210 20% 94%;
+    --sidebar-accent-foreground: 215 25% 25%;
+    --sidebar-border: 210 20% 88%;
+    --sidebar-ring: 199 89% 48%;
 
     /* Clinical tokens */
-    --clinical-50: 166 76% 97%;
-    --clinical-100: 167 85% 89%;
-    --clinical-600: 173 80% 30%;
-    --clinical-900: 176 69% 19%;
+    --clinical-50: 199 89% 97%;
+    --clinical-100: 199 89% 89%;
+    --clinical-600: 199 89% 48%;
+    --clinical-900: 199 89% 25%;
 
     --shadow-subtle: 0 0 0 1px rgba(0,0,0,.05), 0 2px 4px rgba(0,0,0,.02);
     --shadow-elevated: 0 0 0 1px rgba(0,0,0,.05), 0 8px 16px rgba(0,0,0,.08);
     --shadow-interactive: 0 0 0 1px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.08);
 
     /* Status colors */
-    --status-confirmed: 173 80% 30%;
+    --status-confirmed: 199 89% 48%;
     --status-pending: 38 92% 50%;
     --status-cancelled: 0 84% 60%;
     --status-completed: 142 71% 45%;
     --status-in-treatment: 217 91% 60%;
   }
+}
 
+@layer base {
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   .font-mono {
@@ -82,3 +87,50 @@
   }
 }
 
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .glass {
+    background: hsla(0, 0%, 100%, 0.7);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsla(210, 20%, 88%, 0.6);
+    box-shadow: 0 4px 24px -4px hsla(199, 89%, 48%, 0.06);
+  }
+
+  .glass-light {
+    background: hsla(0, 0%, 100%, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsla(210, 20%, 88%, 0.5);
+  }
+
+  .glass-badge {
+    background: hsla(199, 89%, 48%, 0.08);
+    border: 1px solid hsla(199, 89%, 48%, 0.2);
+  }
+
+  .section-gradient {
+    background: linear-gradient(
+      165deg,
+      hsl(205 50% 97%) 0%,
+      hsl(199 60% 95%) 40%,
+      hsl(175 40% 95%) 100%
+    );
+  }
+
+  .section-gradient-alt {
+    background: linear-gradient(
+      195deg,
+      hsl(199 55% 96%) 0%,
+      hsl(205 50% 97%) 50%,
+      hsl(185 45% 96%) 100%
+    );
+  }
+}
