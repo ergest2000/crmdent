@@ -1,61 +1,46 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,500;1,600;1,700&family=Geist+Mono:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 @layer base {
   :root {
     --background: 205 50% 97%;
     --hero-background: 205 60% 95%;
     --foreground: 215 25% 15%;
-
     --card: 0 0% 100%;
     --card-foreground: 215 25% 15%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 15%;
-
     --primary: 199 89% 48%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 210 20% 93%;
     --secondary-foreground: 215 25% 25%;
-
     --muted: 210 20% 94%;
     --muted-foreground: 215 15% 45%;
-
     --accent: 199 50% 92%;
     --accent-foreground: 199 70% 35%;
-
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
-
     --border: 210 20% 88%;
     --input: 210 20% 88%;
     --ring: 199 89% 48%;
-
     --radius: 1rem;
-
-    --sidebar-background: 205 50% 97%;
+    --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 215 25% 25%;
     --sidebar-primary: 199 89% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 20% 94%;
     --sidebar-accent-foreground: 215 25% 25%;
-    --sidebar-border: 210 20% 88%;
+    --sidebar-border: 210 20% 85%;
     --sidebar-ring: 199 89% 48%;
-
     /* Clinical tokens */
     --clinical-50: 199 89% 97%;
     --clinical-100: 199 89% 89%;
     --clinical-600: 199 89% 48%;
     --clinical-900: 199 89% 25%;
-
     --shadow-subtle: 0 0 0 1px rgba(0,0,0,.05), 0 2px 4px rgba(0,0,0,.02);
     --shadow-elevated: 0 0 0 1px rgba(0,0,0,.05), 0 8px 16px rgba(0,0,0,.08);
     --shadow-interactive: 0 0 0 1px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.08);
-
     /* Status colors */
     --status-confirmed: 199 89% 48%;
     --status-pending: 38 92% 50%;
@@ -64,12 +49,10 @@
     --status-in-treatment: 217 91% 60%;
   }
 }
-
 @layer base {
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -77,16 +60,13 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-
   .font-mono {
     font-family: 'Geist Mono', 'SF Mono', 'Fira Code', monospace;
   }
-
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
 }
-
 @layer utilities {
   .scrollbar-hide {
     -ms-overflow-style: none;
@@ -95,7 +75,6 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-
   .glass {
     background: hsla(0, 0%, 100%, 0.7);
     backdrop-filter: blur(24px);
@@ -103,19 +82,16 @@
     border: 1px solid hsla(210, 20%, 88%, 0.6);
     box-shadow: 0 4px 24px -4px hsla(199, 89%, 48%, 0.06);
   }
-
   .glass-light {
     background: hsla(0, 0%, 100%, 0.5);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid hsla(210, 20%, 88%, 0.5);
   }
-
   .glass-badge {
     background: hsla(199, 89%, 48%, 0.08);
     border: 1px solid hsla(199, 89%, 48%, 0.2);
   }
-
   .section-gradient {
     background: linear-gradient(
       165deg,
@@ -124,7 +100,6 @@
       hsl(175 40% 95%) 100%
     );
   }
-
   .section-gradient-alt {
     background: linear-gradient(
       195deg,
