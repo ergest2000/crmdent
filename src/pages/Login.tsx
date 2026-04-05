@@ -22,7 +22,7 @@ export default function Login() {
     if (error) {
       toast({ title: "Gabim", description: error, variant: "destructive" });
     } else {
-      navigate("/");
+      navigate("/app");
     }
   };
 
@@ -35,7 +35,6 @@ export default function Login() {
             <h1 className="mt-3 text-xl font-semibold text-foreground">DenteOS</h1>
             <p className="text-sm text-muted-foreground mt-1">Hyr në llogarinë tënde</p>
           </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Email</label>
@@ -54,16 +53,13 @@ export default function Login() {
                 </button>
               </div>
             </div>
-
             <div className="flex justify-end">
               <Link to="/forgot-password" className="text-xs text-primary hover:underline">Keni harruar fjalëkalimin?</Link>
             </div>
-
             <Button type="submit" className="w-full h-10" disabled={isLoading}>
               {isLoading ? "Duke hyrë..." : "Hyr"}
             </Button>
           </form>
-
           <div className="text-center text-sm text-muted-foreground">
             Nuk keni llogari?{" "}
             <Link to="/register" className="text-primary font-medium hover:underline">Regjistrohu</Link>
