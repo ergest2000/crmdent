@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 import { TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
@@ -49,6 +49,7 @@ export function CashflowChart() {
         <h3 className="text-sm font-medium text-foreground">Të ardhura</h3>
         <CardDateFilter value={preset} dateRange={dateRange} onChange={change} />
       </div>
+
       <div className="mb-3">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Totali i të ardhurave</p>
         <div className="flex items-baseline gap-2">
@@ -61,8 +62,15 @@ export function CashflowChart() {
           </span>
         </div>
       </div>
+
       <ResponsiveContainer width="100%" height={180}>
-        <LineChart data={data}>
+        <AreaChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="cashflowGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
+              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
           <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} width={30} />
@@ -70,8 +78,17 @@ export function CashflowChart() {
             contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, boxShadow: "var(--shadow-elevated)" }}
             formatter={(value: number) => [`€${value.toLocaleString()}`, "Total"]}
           />
-          <Line type="linear" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "hsl(var(--primary))" }} animationDuration={600} />
-        </LineChart>
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke="hsl(var(--primary))"
+            strokeWidth={2}
+            fill="url(#cashflowGradient)"
+            dot={false}
+            activeDot={{ r: 4, fill: "hsl(var(--primary))", strokeWidth: 0 }}
+            animationDuration={600}
+          />
+        </AreaChart>
       </ResponsiveContainer>
     </motion.div>
   );
