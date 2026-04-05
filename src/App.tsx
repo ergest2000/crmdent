@@ -34,13 +34,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Landing Page */}
           <Route path="/" element={<LandingPage />} />
-
-          {/* Tutorial - pa sidebar */}
           <Route path="/tutorial" element={<Tutorial />} />
-
-          {/* App me sidebar */}
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="leads" element={<LeadsPage />} />
@@ -58,7 +53,6 @@ const App = () => (
             <Route path="staff" element={<Staff />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
-
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
