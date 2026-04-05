@@ -73,12 +73,17 @@ const PainPointSection = () => {
     <section className="py-16 md:py-20" style={{ backgroundColor: "#F5F6FA" }}>
       <div className="container mx-auto px-4 sm:px-6">
         <div className="mx-auto max-w-6xl rounded-3xl bg-card border border-border p-6 sm:p-10 md:p-14 shadow-sm">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-            {/* Left side */}
-            <div>
-              <span className="inline-block rounded-full bg-foreground text-background px-4 py-1.5 text-xs font-semibold mb-6">
-                Pain Point
-              </span>
+
+          {/* Label në mes */}
+          <div className="flex justify-center mb-8">
+            <span className="inline-block rounded-full bg-foreground text-background px-4 py-1.5 text-xs font-semibold">
+              Pain Point
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-10">
+            {/* Left side only */}
+            <div className="max-w-2xl mx-auto w-full">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight tracking-tight text-foreground font-heading">
                 Klinika juaj meriton<br />
                 të funksionojë pa kaos
@@ -100,19 +105,8 @@ const PainPointSection = () => {
                 })}
               </div>
             </div>
-
-            {/* Right side - draggable floating pills */}
-            <div className="relative min-h-[320px] sm:min-h-[380px] overflow-hidden">
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                <span className="rounded-full bg-foreground text-background px-5 py-2 text-xs font-bold tracking-wide uppercase shadow-md">
-                  Problemet
-                </span>
-              </div>
-              {floatingPills.map((pill, i) => (
-                <DraggablePill key={i} {...pill} />
-              ))}
-            </div>
           </div>
+
         </div>
       </div>
     </section>
