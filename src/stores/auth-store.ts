@@ -1,157 +1,131 @@
-import { create } from "zustand";
-import { supabase } from "@/integrations/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+import {
+  LayoutDashboard, Users, Calendar, Stethoscope, Receipt, Wallet, BarChart3,
+  UserCog, Settings, Shield, UserPlus, Package, HeartPulse, LogOut, Building2,
+  Activity, Globe,
+} from "lucide-react";
+import { NavLink } from "@/components/NavLink";
+import { useLocation } from "react-router-dom";
+import { useAuthStore } from "@/stores/auth-store";
+import {
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
+} from "@/components/ui/sidebar";
 
-export type UserRole = "super_admin" | "clinic_admin" | "doctor" | "receptionist" | "accountant" | "economist" | "manager";
-
-export interface Profile {
-  id: string;
-  email: string;
-  full_name: string;
-  role: UserRole;
-  clinic_id?: string;
-  clinic_name?: string;
-  phone?: string;
-}
-
-export interface Clinic {
-  id: string;
-  name: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  plan_id?: string;
-  is_active: boolean;
-  created_at: string;
-}
-
-export interface Plan {
-  id: string;
-  name: string;
-  max_users: number;
-  allowed_roles: string[];
-  features: string[];
-  price: number;
-}
-
-// Permissions per role
-const rolePermissions: Record<UserRole, string[]> = {
-  super_admin: ["*"],
-  clinic_admin: ["dashboard", "patients", "doctors", "appointments", "treatments", "finance", "invoices", "stock", "reports", "admin", "staff", "settings", "leads"],
-  doctor: ["dashboard", "patients", "appointments", "treatments"],
-  receptionist: ["dashboard", "patients", "appointments", "leads"],
-  accountant: ["dashboard", "finance", "invoices", "reports"],
-  economist: ["dashboard", "finance", "reports", "stock"],
-  manager: ["dashboard", "patients", "appointments", "treatments", "staff", "reports", "leads"],
+const clinicNavItems = {
+  dashboard: { title: "Paneli", url: "/app", icon: LayoutDashboard },
+  leads: { title: "Leads", url: "/app/leads", icon: UserPlus },
+  patients: { title: "Pacientët", url: "/app/patients", icon: Users },
+  doctors: { title: "Dentistë", url: "/app/doctors", icon: HeartPulse },
+  appointments: { title: "Kalendari i Takimeve", url: "/app/appointments", icon: Calendar },
+  treatments: { title: "Trajtimet", url: "/app/treatments", icon: Stethoscope },
+  finance: { title: "Financa", url: "/app/finance", icon: Wallet },
+  invoices: { title: "Faturat", url: "/app/invoices", icon: Receipt },
+  stock: { title: "Stoku i Produkteve", url: "/app/stock", icon: Package },
+  reports: { title: "Raporte", url: "/app/reports", icon: BarChart3 },
+  admin: { title: "Admin", url: "/app/admin", icon: Shield },
+  staff: { title: "Stafi", url: "/app/staff", icon: UserCog },
+  settings: { title: "Cilësimet", url: "/app/settings", icon: Settings },
 };
 
-interface AuthStore {
-  user: User | null;
-  session: Session | null;
-  profile: Profile | null;
-  loading: boolean;
-  initialized: boolean;
-  clinics: Clinic[];
-  plans: Plan[];
-  initialize: () => Promise<void>;
-  login: (email: string, password: string) => Promise<{ error: string | null }>;
-  register: (email: string, password: string, fullName: string, role?: string, clinicId?: string) => Promise<{ error: string | null }>;
-  logout: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: string | null }>;
-  fetchProfile: () => Promise<void>;
-  fetchClinics: () => Promise<void>;
-  fetchPlans: () => Promise<void>;
-  hasPermission: (page: string) => boolean;
-  isSuperAdmin: () => boolean;
-  isClinicAdmin: () => boolean;
+const superAdminNavItems = [
+  { title: "Dashboard Global", url: "/super-admin", icon: Globe },
+  { title: "Analytics", url: "/super-admin/analytics", icon: Activity },
+  { title: "Përdoruesit", url: "/super-admin/users", icon: Users },
+];
+
+const roleLabels: Record<string, string> = {
+  super_admin: "Super Admin",
+  clinic_admin: "Admin Klinike",
+  doctor: "Doktor",
+  receptionist: "Recepsionist",
+  accountant: "Kontabilist",
+  economist: "Ekonomist",
+  manager: "Menaxher",
+};
+
+function NavGroup({ label, items }: { label: string; items: { title: string; url: string; icon: any }[] }) {
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  const location = useLocation();
+  if (items.length === 0) return null;
+
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">{label}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {items.map((item) => (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton asChild isActive={location.pathname === item.url}>
+                <NavLink to={item.url} end className="flex items-center gap-3 rounded-inner px-3 py-1.5 text-sm text-sidebar-foreground/80 transition-all duration-150 hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent text-foreground font-medium">
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span>{item.title}</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
 }
 
-export const useAuthStore = create<AuthStore>((set, get) => ({
-  user: null,
-  session: null,
-  profile: null,
-  loading: false,
-  initialized: false,
-  clinics: [],
-  plans: [],
+export function AppSidebar() {
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  const profile = useAuthStore((s) => s.profile);
+  const logout = useAuthStore((s) => s.logout);
+  const hasPermission = useAuthStore((s) => s.hasPermission);
+  const isSuperAdmin = useAuthStore((s) => s.isSuperAdmin);
 
-  initialize: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      set({ user: session.user, session, initialized: true });
-      await get().fetchProfile();
-      await get().fetchPlans();
-      if (get().profile?.role === "super_admin") {
-        await get().fetchClinics();
-      }
-    } else {
-      set({ initialized: true });
-    }
+  const filterItems = (keys: string[]) =>
+    keys.filter((k) => !profile || hasPermission(k)).map((k) => (clinicNavItems as any)[k]).filter(Boolean);
 
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-        set({ user: session.user, session });
-        await get().fetchProfile();
-      } else {
-        set({ user: null, session: null, profile: null });
-      }
-    });
-  },
+  const isSA = isSuperAdmin();
 
-  login: async (email, password) => {
-    set({ loading: true });
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    set({ loading: false });
-    return { error: error?.message || null };
-  },
+  const mainNav = isSA ? [] : filterItems(["dashboard", "leads", "patients", "doctors", "appointments", "treatments"]);
+  const financeNav = isSA ? [] : filterItems(["finance", "invoices", "stock", "reports"]);
+  const adminNav = isSA ? [] : filterItems(["admin", "staff", "settings"]);
 
-  register: async (email, password, fullName, role = "clinic_admin", clinicId) => {
-    set({ loading: true });
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName, role, clinic_id: clinicId } },
-    });
-    set({ loading: false });
-    return { error: error?.message || null };
-  },
-
-  logout: async () => {
-    await supabase.auth.signOut();
-    set({ user: null, session: null, profile: null, clinics: [], plans: [] });
-  },
-
-  resetPassword: async (email) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + "/#/reset-password",
-    });
-    return { error: error?.message || null };
-  },
-
-  fetchProfile: async () => {
-    const user = get().user;
-    if (!user) return;
-    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-    if (data) set({ profile: data as Profile });
-  },
-
-  fetchClinics: async () => {
-    const { data } = await supabase.from("clinics").select("*").order("created_at", { ascending: false });
-    if (data) set({ clinics: data as Clinic[] });
-  },
-
-  fetchPlans: async () => {
-    const { data } = await supabase.from("plans").select("*").order("price");
-    if (data) set({ plans: data as Plan[] });
-  },
-
-  hasPermission: (page) => {
-    const profile = get().profile;
-    if (!profile) return false;
-    const perms = rolePermissions[profile.role] || [];
-    return perms.includes("*") || perms.includes(page);
-  },
-
-  isSuperAdmin: () => get().profile?.role === "super_admin",
-  isClinicAdmin: () => get().profile?.role === "clinic_admin",
-}));
+  return (
+    <Sidebar collapsible="icon" className="shadow-[inset_-1px_0_0_0_rgba(0,0,0,0.05)]">
+      <SidebarHeader className="px-4 py-4">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-inner bg-primary text-primary-foreground text-sm font-semibold">D</div>
+          {!collapsed && (
+            <div>
+              <p className="text-sm font-semibold text-foreground">DenteOS</p>
+              <p className="text-[11px] text-muted-foreground">
+                {isSA ? "Super Admin Panel" : "Klinika Dentare"}
+              </p>
+            </div>
+          )}
+        </div>
+      </SidebarHeader>
+      <SidebarContent className="px-2">
+        {isSA && <NavGroup label="Platform" items={superAdminNavItems} />}
+        {!isSA && <NavGroup label="Kryesore" items={mainNav} />}
+        {!isSA && financeNav.length > 0 && <NavGroup label="Financa" items={financeNav} />}
+        {!isSA && adminNav.length > 0 && <NavGroup label="Admin" items={adminNav} />}
+      </SidebarContent>
+      <SidebarFooter className="px-3 py-3 space-y-2">
+        {!collapsed && profile && (
+          <div className="flex items-center gap-2 px-1">
+            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary">
+              {profile.full_name?.[0]?.toUpperCase() || profile.email?.[0]?.toUpperCase() || "U"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-foreground truncate">{profile.full_name || profile.email}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{roleLabels[profile.role] || profile.role}</p>
+            </div>
+          </div>
+        )}
+        <button onClick={() => logout()} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors">
+          <LogOut className="h-3.5 w-3.5" />
+          {!collapsed && <span>Dil nga llogaria</span>}
+        </button>
+        {!collapsed && <p className="text-[11px] text-muted-foreground px-1">© 2026 DenteOS v1.0</p>}
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
