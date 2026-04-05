@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
 import LandingPage from "./landing/LandingPage";
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import InboxPage from "./pages/Inbox";
 import Patients from "./pages/Patients";
@@ -34,6 +35,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="leads" element={<LeadsPage />} />
