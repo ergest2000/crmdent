@@ -43,7 +43,6 @@ const Navbar = () => {
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-black font-heading">D</span>
             DenteOS
           </a>
-
           <div className="hidden md:flex items-center gap-7">
             {links.map((l) => (
               <a key={l.href} href={l.href} onClick={(e) => handleNavClick(e, l.href)} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
@@ -51,7 +50,6 @@ const Navbar = () => {
               </a>
             ))}
           </div>
-
           <div className="hidden md:flex items-center gap-2.5">
             <LanguageSwitcher />
             <button onClick={goToLogin} className="rounded-full px-4 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
@@ -63,13 +61,11 @@ const Navbar = () => {
               </Button>
             </a>
           </div>
-
           <button className="md:hidden text-foreground p-1" onClick={() => setOpen(!open)}>
             {open ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </nav>
-
       {open && (
         <div className="md:hidden w-full max-w-4xl mt-2 rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-xl shadow-foreground/5 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="p-4 flex flex-col gap-0.5">
