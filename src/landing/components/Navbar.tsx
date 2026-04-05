@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../components/ui/button";
 import LanguageSwitcher from "./LanguageSwitcher";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -58,12 +58,10 @@ const Navbar = () => {
           {/* Right side */}
           <div className="hidden md:flex items-center gap-2.5">
             <LanguageSwitcher />
-            <a href="/login">
-              <button className="rounded-full px-4 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
-                {t.nav.login || "Hyr"}
-              </button>
-            </a>
-            <a href="/login">
+            <button className="rounded-full px-4 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
+              {t.nav.login || "Hyr"}
+            </button>
+            <a href="#trial" onClick={(e) => handleNavClick(e, "#trial")}>
               <Button size="sm" className="rounded-full px-5 font-semibold shadow-md shadow-primary/15 text-xs h-8 font-heading">
                 {t.nav.tryFree}
               </Button>
@@ -76,7 +74,7 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile menu - separate panel below pill */}
       {open && (
         <div className="md:hidden w-full max-w-4xl mt-2 rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-xl shadow-foreground/5 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="p-4 flex flex-col gap-0.5">
@@ -91,12 +89,10 @@ const Navbar = () => {
               <span className="text-xs text-muted-foreground font-medium">Language</span>
               <LanguageSwitcher />
             </div>
-            <a href="/login">
-              <button className="w-full rounded-xl py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
-                {t.nav.login || "Hyr"}
-              </button>
-            </a>
-            <a href="/login">
+            <button className="w-full rounded-xl py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
+              {t.nav.login || "Hyr"}
+            </button>
+            <a href="#trial" onClick={(e) => handleNavClick(e, "#trial")}>
               <Button size="sm" className="w-full rounded-full font-semibold shadow-md shadow-primary/15 font-heading h-11 text-sm">{t.nav.tryFree}</Button>
             </a>
           </div>
