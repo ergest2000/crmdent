@@ -26,14 +26,13 @@
     --ring: 199 89% 48%;
     --radius: 1rem;
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 25% 25%;
+    --sidebar-foreground: 215 25% 10%;
     --sidebar-primary: 199 89% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 94%;
-    --sidebar-accent-foreground: 215 25% 25%;
-    --sidebar-border: 210 20% 85%;
+    --sidebar-accent: 210 20% 92%;
+    --sidebar-accent-foreground: 215 25% 10%;
+    --sidebar-border: 210 20% 82%;
     --sidebar-ring: 199 89% 48%;
-    /* Clinical tokens */
     --clinical-50: 199 89% 97%;
     --clinical-100: 199 89% 89%;
     --clinical-600: 199 89% 48%;
@@ -41,7 +40,6 @@
     --shadow-subtle: 0 0 0 1px rgba(0,0,0,.05), 0 2px 4px rgba(0,0,0,.02);
     --shadow-elevated: 0 0 0 1px rgba(0,0,0,.05), 0 8px 16px rgba(0,0,0,.08);
     --shadow-interactive: 0 0 0 1px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.08);
-    /* Status colors */
     --status-confirmed: 199 89% 48%;
     --status-pending: 38 92% 50%;
     --status-cancelled: 0 84% 60%;
@@ -50,9 +48,7 @@
   }
 }
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -60,21 +56,12 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  .font-mono {
-    font-family: 'Geist Mono', 'SF Mono', 'Fira Code', monospace;
-  }
-  .tabular-nums {
-    font-variant-numeric: tabular-nums;
-  }
+  .font-mono { font-family: 'Geist Mono', 'SF Mono', 'Fira Code', monospace; }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
 }
 @layer utilities {
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
   .glass {
     background: hsla(0, 0%, 100%, 0.7);
     backdrop-filter: blur(24px);
@@ -93,19 +80,9 @@
     border: 1px solid hsla(199, 89%, 48%, 0.2);
   }
   .section-gradient {
-    background: linear-gradient(
-      165deg,
-      hsl(205 50% 97%) 0%,
-      hsl(199 60% 95%) 40%,
-      hsl(175 40% 95%) 100%
-    );
+    background: linear-gradient(165deg, hsl(205 50% 97%) 0%, hsl(199 60% 95%) 40%, hsl(175 40% 95%) 100%);
   }
   .section-gradient-alt {
-    background: linear-gradient(
-      195deg,
-      hsl(199 55% 96%) 0%,
-      hsl(205 50% 97%) 50%,
-      hsl(185 45% 96%) 100%
-    );
+    background: linear-gradient(195deg, hsl(199 55% 96%) 0%, hsl(205 50% 97%) 50%, hsl(185 45% 96%) 100%);
   }
 }
