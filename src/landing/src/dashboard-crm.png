@@ -1,0 +1,7 @@
+# Kopjo imazhin në folder
+cp ~/Desktop/screenshot.png /path/to/crmdent/src/landing/dashboard-crm.png
+
+# Commit dhe push
+git add src/landing/dashboard-crm.png
+git commit -m "Add dashboard screenshot"
+git push
