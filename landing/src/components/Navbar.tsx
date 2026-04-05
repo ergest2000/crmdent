@@ -25,11 +25,11 @@ const Navbar = () => {
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
     const el = document.querySelector(href);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     setOpen(false);
   };
+
+  const goToLogin = () => { window.location.href = "/login"; };
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex flex-col items-center px-4 pt-4">
@@ -54,9 +54,9 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center gap-2.5">
             <LanguageSwitcher />
-            <a href="/login" className="rounded-full px-4 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
+            <button onClick={goToLogin} className="rounded-full px-4 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
               {t.nav.login || "Hyr"}
-            </a>
+            </button>
             <a href="#trial" onClick={(e) => handleNavClick(e, "#trial")}>
               <Button size="sm" className="rounded-full px-5 font-semibold shadow-md shadow-primary/15 text-xs h-8 font-heading">
                 {t.nav.tryFree}
@@ -84,9 +84,9 @@ const Navbar = () => {
               <span className="text-xs text-muted-foreground font-medium">Language</span>
               <LanguageSwitcher />
             </div>
-            <a href="/login" className="w-full rounded-xl py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors text-center">
+            <button onClick={goToLogin} className="w-full rounded-xl py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
               {t.nav.login || "Hyr"}
-            </a>
+            </button>
             <a href="#trial" onClick={(e) => handleNavClick(e, "#trial")}>
               <Button size="sm" className="w-full rounded-full font-semibold shadow-md shadow-primary/15 font-heading h-11 text-sm">{t.nav.tryFree}</Button>
             </a>
