@@ -25,11 +25,11 @@ const Navbar = () => {
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
     const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
     setOpen(false);
   };
-
-  const goToLogin = () => { window.location.href = "/login"; };
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex flex-col items-center px-4 pt-4">
@@ -43,6 +43,7 @@ const Navbar = () => {
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-black font-heading">D</span>
             DenteOS
           </a>
+
           <div className="hidden md:flex items-center gap-7">
             {links.map((l) => (
               <a key={l.href} href={l.href} onClick={(e) => handleNavClick(e, l.href)} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
@@ -50,9 +51,10 @@ const Navbar = () => {
               </a>
             ))}
           </div>
+
           <div className="hidden md:flex items-center gap-2.5">
             <LanguageSwitcher />
-            <button onClick={goToLogin} className="rounded-full px-4 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
+            <button onClick={() => window.location.href = "/login"} className="rounded-full px-4 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
               {t.nav.login || "Hyr"}
             </button>
             <a href="#trial" onClick={(e) => handleNavClick(e, "#trial")}>
@@ -61,11 +63,13 @@ const Navbar = () => {
               </Button>
             </a>
           </div>
+
           <button className="md:hidden text-foreground p-1" onClick={() => setOpen(!open)}>
             {open ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </nav>
+
       {open && (
         <div className="md:hidden w-full max-w-4xl mt-2 rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-xl shadow-foreground/5 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="p-4 flex flex-col gap-0.5">
@@ -80,7 +84,7 @@ const Navbar = () => {
               <span className="text-xs text-muted-foreground font-medium">Language</span>
               <LanguageSwitcher />
             </div>
-            <button onClick={goToLogin} className="w-full rounded-xl py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
+            <button onClick={() => window.location.href = "/login"} className="w-full rounded-xl py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors">
               {t.nav.login || "Hyr"}
             </button>
             <a href="#trial" onClick={(e) => handleNavClick(e, "#trial")}>
