@@ -1,11 +1,9 @@
 import { useLanguage } from "../contexts/LanguageContext";
-import dashboardImg from "../dashboard-crm.jpg";
 
 const HeroSection = () => {
   const { t } = useLanguage();
   return (
     <section className="relative overflow-hidden bg-background">
-      {/* Grid mesh background */}
       <div className="absolute inset-0 pointer-events-none">
         <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -25,10 +23,8 @@ const HeroSection = () => {
           <rect width="100%" height="100%" fill="url(#hero-grid)" mask="url(#grid-mask)" />
         </svg>
       </div>
-      {/* Subtle accent circles */}
       <div className="absolute top-[-120px] left-[-80px] w-[400px] h-[400px] rounded-full bg-primary/[0.04] blur-[80px] pointer-events-none" />
       <div className="absolute top-[10%] right-[-60px] w-[300px] h-[300px] rounded-full bg-primary/[0.05] blur-[80px] pointer-events-none" />
-      {/* Hero content */}
       <div className="relative z-10 flex flex-col items-center pt-24 sm:pt-28 md:pt-36 px-4 sm:px-6">
         <h1 className="text-center text-3xl sm:text-4xl md:text-5xl lg:text-[4.2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground animate-fade-in font-heading">
           {t.hero.title1}<br />
@@ -41,7 +37,6 @@ const HeroSection = () => {
         >
           {t.hero.subtitle}
         </p>
-        {/* Dashboard Screenshot */}
         <div className="mt-12 sm:mt-16 md:mt-20 mb-[-2rem] sm:mb-[-4rem] w-full max-w-5xl animate-fade-in" style={{ animationDelay: "0.4s", animationFillMode: "both" }}>
           <div className="glass rounded-xl sm:rounded-2xl p-1.5 sm:p-2 shadow-xl shadow-primary/5">
             <div className="rounded-xl overflow-hidden border border-border bg-card">
@@ -58,7 +53,7 @@ const HeroSection = () => {
                 </div>
               </div>
               <img
-                src={dashboardImg}
+                src="/dashboard-new.png"
                 alt="DenteOS Dashboard"
                 className="w-full h-auto"
               />
