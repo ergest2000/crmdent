@@ -30,7 +30,7 @@ const FeaturesSection = () => {
   const mainFeatures = [
     { title: t.features.dashboard, desc: t.features.dashboardDesc, img: featDashboard, alt: "Dashboard", lottie: "https://assets-v2.lottiefiles.com/a/893c142c-ad89-11ee-ba6e-93f23076acee/cM5ZCXu3ed.lottie" },
     { title: t.features.patients, desc: t.features.patientsDesc, img: featPatients, alt: "Patients", lottie: "" },
-    { title: t.features.calendar, desc: t.features.calendarDesc, img: featCalendar, alt: "Calendar", lottie: "" },
+    { title: t.features.calendar, desc: t.features.calendarDesc, img: featCalendar, alt: "Calendar", lottie: "https://lottie.host/2261fc2f-c0f9-4d83-9669-e4e94266cea9/rwe80Hxs8O.lottie" },
     { title: t.features.reports, desc: t.features.reportsDesc, img: featReports, alt: "Reports", lottie: "" },
   ];
 
@@ -81,7 +81,7 @@ const FeaturesSection = () => {
               </div>
               <div className="mt-4 sm:mt-6 flex justify-center">
                 {feat.lottie ? (
-                  <div className="w-full flex-1 min-h-[280px] sm:min-h-[360px]">
+                  <div className="w-full flex-1 min-h-[280px] sm:min-h-[360px]" style={{ filter: "hue-rotate(200deg) saturate(1.2)" }}>
                     <LottieAnimation src={feat.lottie} style={{ width: "100%", height: "100%" }} />
                   </div>
                 ) : (
