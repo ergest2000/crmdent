@@ -2,21 +2,20 @@ import { Circle, CheckCircle2, Star } from "lucide-react";
 import { useRef, useCallback, useEffect, useState } from "react";
 
 const floatingPills = [
-  { label: "Dosje të Humbura", gradient: "from-pink-400 to-rose-500", startX: -120, startY: -100, rotate: -6 },
-  { label: "Faturim Manual", gradient: "from-emerald-400 to-green-500", startX: 80, startY: -80, rotate: 3 },
-  { label: "Staf i Çorganizuar", gradient: "from-violet-400 to-blue-500", startX: -140, startY: 40, rotate: -3 },
-  { label: "Stok i Pakontrolluar", gradient: "from-orange-400 to-amber-500", startX: 100, startY: 60, rotate: 6 },
-  { label: "Humbje Kohe", gradient: "from-cyan-400 to-teal-500", startX: -40, startY: 120, rotate: -2 },
+  { label: "Pa historik pacienti", gradient: "from-pink-400 to-rose-500", x: 18, y: 15, rotate: -6, duration: 3.2 },
+  { label: "Faturim Manual", gradient: "from-emerald-400 to-green-500", x: 58, y: 25, rotate: 3, duration: 2.8 },
+  { label: "Staf i Çorganizuar", gradient: "from-violet-400 to-blue-500", x: 8, y: 52, rotate: -3, duration: 3.6 },
+  { label: "Humbje Kohe", gradient: "from-orange-400 to-amber-500", x: 52, y: 60, rotate: 6, duration: 2.5 },
+  { label: "Pa kujdes pas vizitës", gradient: "from-cyan-400 to-teal-500", x: 25, y: 78, rotate: -2, duration: 4.0 },
 ];
 
-const DraggablePill = ({ label, gradient, startX, startY, rotate }: typeof floatingPills[0]) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ x: startX, y: startY });
+const FloatingPill = ({ label, gradient, x, y, rotate, duration }: typeof floatingPills[0]) => {
   const [dragging, setDragging] = useState(false);
-  const dragStart = useRef({ x: 0, y: 0, px: 0, py: 0 });
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const dragStart = useRef({ mx: 0, my: 0, px: 0, py: 0 });
 
   const onStart = useCallback((clientX: number, clientY: number) => {
-    dragStart.current = { x: clientX, y: clientY, px: pos.x, py: pos.y };
+    dragStart.current = { mx: clientX, my: clientY, px: pos.x, py: pos.y };
     setDragging(true);
   }, [pos]);
 
@@ -25,8 +24,8 @@ const DraggablePill = ({ label, gradient, startX, startY, rotate }: typeof float
     const onMove = (e: MouseEvent | TouchEvent) => {
       const { clientX, clientY } = 'touches' in e ? e.touches[0] : e;
       setPos({
-        x: dragStart.current.px + (clientX - dragStart.current.x),
-        y: dragStart.current.py + (clientY - dragStart.current.y),
+        x: dragStart.current.px + (clientX - dragStart.current.mx),
+        y: dragStart.current.py + (clientY - dragStart.current.my),
       });
     };
     const onEnd = () => setDragging(false);
@@ -44,20 +43,26 @@ const DraggablePill = ({ label, gradient, startX, startY, rotate }: typeof float
 
   return (
     <div
-      ref={ref}
       onMouseDown={(e) => onStart(e.clientX, e.clientY)}
       onTouchStart={(e) => onStart(e.touches[0].clientX, e.touches[0].clientY)}
-      className={`absolute select-none cursor-grab active:cursor-grabbing rounded-full bg-gradient-to-r ${gradient} px-5 py-2.5 text-white text-sm font-semibold whitespace-nowrap transition-shadow duration-200`}
+      className={`absolute select-none cursor-grab active:cursor-grabbing rounded-full bg-gradient-to-r ${gradient} px-5 py-2.5 text-white text-sm font-semibold whitespace-nowrap hover:scale-105 transition-transform`}
       style={{
-        left: '50%',
-        top: '50%',
-        transform: `translate(-50%, -50%) translate(${pos.x}px, ${pos.y}px) rotate(${rotate}deg) ${dragging ? 'scale(1.08)' : 'scale(1)'}`,
-        boxShadow: dragging ? '0 12px 28px -4px rgba(0,0,0,0.2)' : '0 6px 16px -4px rgba(0,0,0,0.12)',
+        left: `${x}%`,
+        top: `${y}%`,
+        transform: `translate(${pos.x}px, ${pos.y}px) rotate(${rotate}deg) ${dragging ? 'scale(1.08)' : ''}`,
+        boxShadow: dragging ? '0 12px 28px -4px rgba(0,0,0,0.2)' : '0 6px 16px -4px rgba(0,0,0,0.15)',
         zIndex: dragging ? 50 : 10,
         touchAction: 'none',
+        animation: dragging ? 'none' : `float-${Math.round(duration * 10)} ${duration}s ease-in-out infinite`,
       }}
     >
       {label}
+      <style>{`
+        @keyframes float-${Math.round(duration * 10)} {
+          0%, 100% { transform: translate(${pos.x}px, ${pos.y}px) rotate(${rotate}deg) translateY(0px); }
+          50% { transform: translate(${pos.x}px, ${pos.y}px) rotate(${rotate}deg) translateY(-10px); }
+        }
+      `}</style>
     </div>
   );
 };
@@ -74,16 +79,16 @@ const PainPointSection = () => {
       <div className="container mx-auto px-4 sm:px-6">
         <div className="mx-auto max-w-6xl rounded-3xl bg-card border border-border p-6 sm:p-10 md:p-14 shadow-sm">
 
-          {/* Label në mes */}
-          <div className="flex justify-center mb-8">
-            <span className="inline-block rounded-full bg-foreground text-background px-4 py-1.5 text-xs font-semibold">
-              Pain Point
+          {/* Label sipër majtas */}
+          <div className="mb-8">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-4 py-1.5 text-xs font-semibold">
+              ✦ Problemet e Klinikave Dentare
             </span>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-1 gap-10">
-            {/* Left side only */}
-            <div className="max-w-2xl mx-auto w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+            {/* Left side */}
+            <div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight tracking-tight text-foreground font-heading">
                 Klinika juaj meriton<br />
                 të funksionojë pa kaos
@@ -104,6 +109,13 @@ const PainPointSection = () => {
                   );
                 })}
               </div>
+            </div>
+
+            {/* Right side - floating pills */}
+            <div className="relative min-h-[320px] sm:min-h-[380px] rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50/60 to-slate-100/60 border border-border/40">
+              {floatingPills.map((pill, i) => (
+                <FloatingPill key={i} {...pill} />
+              ))}
             </div>
           </div>
 
