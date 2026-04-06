@@ -81,7 +81,7 @@ const FeaturesSection = () => {
               </div>
               <div className="mt-4 sm:mt-6 flex justify-center">
                 {feat.lottie ? (
-                  <div className="w-full flex-1 min-h-[280px] sm:min-h-[360px]" style={{ filter: feat.alt === "Calendar" ? "hue-rotate(170deg) saturate(3) brightness(0.95)" : "hue-rotate(200deg) saturate(1.2)" }}>
+                  <div className="w-full flex-1 min-h-[280px] sm:min-h-[360px]" style={{ filter: "brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1352%) hue-rotate(180deg) brightness(119%) contrast(119%)" }}>
                     <LottieAnimation src={feat.lottie} style={{ width: "100%", height: "100%" }} />
                   </div>
                 ) : (
