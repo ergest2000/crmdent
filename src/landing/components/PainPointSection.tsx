@@ -79,15 +79,13 @@ const PainPointSection = () => {
       <div className="container mx-auto px-4 sm:px-6">
         <div className="mx-auto max-w-6xl rounded-3xl bg-card border border-border p-6 sm:p-10 md:p-14 shadow-sm">
 
-          {/* Label sipër majtas */}
-          <div className="mb-8">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-4 py-1.5 text-xs font-semibold">
+          <div className="mb-8 flex justify-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 px-4 py-1.5 text-xs font-semibold">
               ✦ Problemet e Klinikave Dentare
             </span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-            {/* Left side */}
             <div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight tracking-tight text-foreground font-heading">
                 Klinika juaj meriton<br />
@@ -111,7 +109,6 @@ const PainPointSection = () => {
               </div>
             </div>
 
-            {/* Right side - floating pills */}
             <div className="relative min-h-[320px] sm:min-h-[380px] rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50/60 to-slate-100/60 border border-border/40">
               {floatingPills.map((pill, i) => (
                 <FloatingPill key={i} {...pill} />
