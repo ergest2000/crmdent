@@ -2,10 +2,10 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LayoutDashboard, Users, CalendarDays, FileBarChart, Stethoscope, Receipt, Package, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import LottieAnimation from "@/components/LottieAnimation";
-import featDashboard from "../assets/feat-dashboard.png";
-import featPatients from "../assets/feat-patients.png";
-import featCalendar from "../assets/feat-calendar.png";
-import featReports from "../assets/feat-reports.png";
+import featDashboard from "@/assets/feat-dashboard.png";
+import featPatients from "@/assets/feat-patients.png";
+import featCalendar from "@/assets/feat-calendar.png";
+import featReports from "@/assets/feat-reports.png";
 
 const FeaturesSection = () => {
   const { t } = useLanguage();
