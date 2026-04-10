@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { HeartPulse, Users, CalendarDays, FileBarChart, Stethoscope, Receipt, Package, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import LottieAnimation from "./LottieAnimation";
+import PatientCardAnimation from "./PatientCardAnimation";
 import featDashboard from "../feat-dashboard.png";
 import featPatients from "../feat-patients.png";
 import featCalendar from "../feat-calendar.png";
@@ -28,10 +29,10 @@ const FeaturesSection = () => {
   }, [handleScroll]);
 
   const mainFeatures = [
-    { title: t.features.dashboard, desc: t.features.dashboardDesc, img: featDashboard, alt: "Dashboard", lottie: "https://assets-v2.lottiefiles.com/a/893c142c-ad89-11ee-ba6e-93f23076acee/cM5ZCXu3ed.lottie" },
-    { title: t.features.patients, desc: t.features.patientsDesc, img: featPatients, alt: "Patients", lottie: "" },
-    { title: t.features.calendar, desc: t.features.calendarDesc, img: featCalendar, alt: "Calendar", lottie: "https://lottie.host/baeee143-7170-4ba8-8b08-2bbf9e23d1ec/5b4Q0c884j.lottie" },
-    { title: t.features.reports, desc: t.features.reportsDesc, img: featReports, alt: "Reports", lottie: "https://lottie.host/f944618d-e602-4f05-936d-1e43cdd0666d/VBwjjok5Id.lottie" },
+    { title: t.features.dashboard, desc: t.features.dashboardDesc, img: featDashboard, alt: "Dashboard", lottie: "https://assets-v2.lottiefiles.com/a/893c142c-ad89-11ee-ba6e-93f23076acee/cM5ZCXu3ed.lottie", custom: null },
+    { title: t.features.patients, desc: t.features.patientsDesc, img: featPatients, alt: "Patients", lottie: "", custom: <PatientCardAnimation /> },
+    { title: t.features.calendar, desc: t.features.calendarDesc, img: featCalendar, alt: "Calendar", lottie: "https://lottie.host/baeee143-7170-4ba8-8b08-2bbf9e23d1ec/5b4Q0c884j.lottie", custom: null },
+    { title: t.features.reports, desc: t.features.reportsDesc, img: featReports, alt: "Reports", lottie: "https://lottie.host/f944618d-e602-4f05-936d-1e43cdd0666d/VBwjjok5Id.lottie", custom: null },
   ];
 
   const additionalFeatures = [
@@ -80,8 +81,12 @@ const FeaturesSection = () => {
                 </p>
               </div>
               <div className="mt-4 sm:mt-6 flex justify-center">
-                {feat.lottie ? (
-                  <div className="w-full flex-1 min-h-[280px] sm:min-h-[360px]" style={{}}>
+                {feat.custom ? (
+                  <div className="w-full flex-1 min-h-[280px] sm:min-h-[360px] flex items-center justify-center">
+                    {feat.custom}
+                  </div>
+                ) : feat.lottie ? (
+                  <div className="w-full flex-1 min-h-[280px] sm:min-h-[360px]">
                     <LottieAnimation src={feat.lottie} style={{ width: "100%", height: "100%" }} />
                   </div>
                 ) : (
