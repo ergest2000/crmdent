@@ -2,10 +2,10 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LayoutDashboard, Users, CalendarDays, FileBarChart, Stethoscope, Receipt, Package, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import LottieAnimation from "@/components/LottieAnimation";
-import featDashboard from "@/assets/feat-dashboard.png";
-import featPatients from "@/assets/feat-patients.png";
-import featCalendar from "@/assets/feat-calendar.png";
-import featReports from "@/assets/feat-reports.png";
+import featDashboard from "../assets/feat-dashboard.png";
+import featPatients from "../assets/feat-patients.png";
+import featCalendar from "../assets/feat-calendar.png";
+import featReports from "../assets/feat-reports.png";
 
 const FeaturesSection = () => {
   const { t } = useLanguage();
@@ -31,7 +31,7 @@ const FeaturesSection = () => {
     { title: t.features.dashboard, desc: t.features.dashboardDesc, img: featDashboard, alt: "Dashboard", lottie: "https://assets-v2.lottiefiles.com/a/893c142c-ad89-11ee-ba6e-93f23076acee/cM5ZCXu3ed.lottie" },
     { title: t.features.patients, desc: t.features.patientsDesc, img: featPatients, alt: "Patients", lottie: "" },
     { title: t.features.calendar, desc: t.features.calendarDesc, img: featCalendar, alt: "Calendar", lottie: "" },
-    { title: t.features.reports, desc: t.features.reportsDesc, img: featReports, alt: "Reports", lottie: "" },
+    { title: t.features.reports, desc: t.features.reportsDesc, img: featReports, alt: "Reports", lottie: "https://lottie.host/f944618d-e602-4f05-936d-1e43cdd0666d/VBwjjok5Id.lottie" },
   ];
 
   const additionalFeatures = [
