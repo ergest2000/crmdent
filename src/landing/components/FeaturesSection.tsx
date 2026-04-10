@@ -30,7 +30,7 @@ const FeaturesSection = () => {
   const mainFeatures = [
     { title: t.features.dashboard, desc: t.features.dashboardDesc, img: featDashboard, alt: "Dashboard", lottie: "https://assets-v2.lottiefiles.com/a/893c142c-ad89-11ee-ba6e-93f23076acee/cM5ZCXu3ed.lottie" },
     { title: t.features.patients, desc: t.features.patientsDesc, img: featPatients, alt: "Patients", lottie: "" },
-    { title: t.features.calendar, desc: t.features.calendarDesc, img: featCalendar, alt: "Calendar", lottie: "https://lottie.host/2261fc2f-c0f9-4d83-9669-e4e94266cea9/rwe80Hxs8O.lottie" },
+    { title: t.features.calendar, desc: t.features.calendarDesc, img: featCalendar, alt: "Calendar", lottie: "https://lottie.host/baeee143-7170-4ba8-8b08-2bbf9e23d1ec/5b4Q0c884j.lottie" },
     { title: t.features.reports, desc: t.features.reportsDesc, img: featReports, alt: "Reports", lottie: "https://lottie.host/f944618d-e602-4f05-936d-1e43cdd0666d/VBwjjok5Id.lottie" },
   ];
 
