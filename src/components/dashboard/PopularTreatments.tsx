@@ -1,16 +1,28 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { CardDateFilter, useCardDateFilter } from "@/components/dashboard/DashboardDateFilter";
-
-const treatmentStats = [
-  { id: "TRT-001", name: "Pastrim dhëmbësh", count: 86 },
-  { id: "TRT-005", name: "Heqje dhëmbi", count: 34 },
-  { id: "TRT-006", name: "Kontroll i përgjithshëm", count: 142 },
-  { id: "TRT-002", name: "Mbushje", count: 68 },
-  { id: "TRT-003", name: "Trajtim kanali", count: 22 },
-];
+import { useAppointmentStore } from "@/stores/appointment-store";
 
 export function PopularTreatments() {
   const { preset, dateRange, change } = useCardDateFilter("month");
+  const appointments = useAppointmentStore((s) => s.appointments);
+
+  const treatmentStats = useMemo(() => {
+    const filtered = appointments.filter((a) => {
+      if (!a.date) return false;
+      const d = new Date(a.date);
+      return d >= dateRange.from && d <= dateRange.to;
+    });
+    const base = filtered.length > 0 ? filtered : appointments;
+    const counts: Record<string, number> = {};
+    base.forEach((a) => {
+      counts[a.treatment] = (counts[a.treatment] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [appointments, dateRange]);
 
   return (
     <motion.div
@@ -23,18 +35,22 @@ export function PopularTreatments() {
         <h3 className="text-sm font-medium text-foreground">Trajtimet më të shpeshta</h3>
         <CardDateFilter value={preset} dateRange={dateRange} onChange={change} />
       </div>
-      <div className="space-y-2.5">
-        {treatmentStats.slice(0, 5).map((t) => (
-          <div key={t.id} className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-1 h-6 rounded-full bg-primary/70 group-hover:bg-primary transition-colors" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-foreground truncate">{t.name}</p>
-              <p className="text-[10px] text-muted-foreground">{t.count} trajtimë</p>
+      {treatmentStats.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-4 text-center">Nuk ka të dhëna</p>
+      ) : (
+        <div className="space-y-2.5">
+          {treatmentStats.map((t, i) => (
+            <div key={i} className="flex items-center gap-3 group cursor-pointer">
+              <div className="w-1 h-6 rounded-full bg-primary/70 group-hover:bg-primary transition-colors" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-foreground truncate">{t.name}</p>
+                <p className="text-[10px] text-muted-foreground">{t.count} trajtimë</p>
+              </div>
+              <span className="text-xs font-medium tabular-nums font-mono text-muted-foreground">{t.count}</span>
             </div>
-            <span className="text-xs font-medium tabular-nums font-mono text-muted-foreground">{t.count}</span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 }
