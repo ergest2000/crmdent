@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useAuthStore } from "@/stores/auth-store";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Product {
   id: string;
@@ -30,7 +31,10 @@ export const useProductStore = create<ProductStore>()(
       loading: false,
 
       fetchProducts: async () => {
-        set({ loading: false });
+        set({ loading: true });
+        const { data } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+        if (data) set({ products: data, loading: false });
+        else set({ loading: false });
       },
 
       addProduct: async (productData) => {
