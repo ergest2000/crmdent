@@ -1,15 +1,20 @@
 import { useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useDoctorStore } from "@/stores/doctor-store";
 import { usePatientStore } from "@/stores/patient-store";
 import { useStaffStore } from "@/stores/staff-store";
 import { useTreatmentStore } from "@/stores/treatment-store";
 import { useAppointmentStore } from "@/stores/appointment-store";
 import { useProductStore } from "@/stores/product-store";
+import { useAuthStore } from "@/stores/auth-store";
 
 export function AppLayout() {
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const initialized = useAuthStore((s) => s.initialized);
+
   const fetchDoctors = useDoctorStore((s) => s.fetchDoctors);
   const fetchPatients = usePatientStore((s) => s.fetchPatients);
   const fetchStaff = useStaffStore((s) => s.fetchStaff);
@@ -17,6 +22,14 @@ export function AppLayout() {
   const fetchAppointments = useAppointmentStore((s) => s.fetchAppointments);
   const fetchProducts = useProductStore((s) => s.fetchProducts);
 
+  // Redirect to login when user logs out
+  useEffect(() => {
+    if (initialized && !user) {
+      navigate("/login");
+    }
+  }, [user, initialized]);
+
+  // Fetch all data on mount
   useEffect(() => {
     fetchDoctors();
     fetchPatients();
