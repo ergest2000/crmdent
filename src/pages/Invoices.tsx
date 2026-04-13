@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Search, Plus, Download, Mail, Eye, ChevronDown, FileText, Printer, Pencil, Trash2 } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { exportPDF, exportCSV } from "@/lib/export-utils";
-import { payments, statusLabels, paymentMethodLabels } from "@/lib/mock-data";
+import { statusLabels } from "@/lib/mock-data";
 import { clinicConfig } from "@/lib/invoice-utils";
 import { downloadInvoicePDF, generateInvoicePDF } from "@/lib/invoice-pdf";
 import { useInvoiceStore } from "@/stores/invoice-store";
@@ -58,7 +58,6 @@ export default function Invoices() {
     overdue: fiscalInvoices.filter((i) => i.status === "overdue").length,
   };
 
-  const invoicePayments = (invoiceId: string) => payments.filter((p) => p.invoiceId === invoiceId);
 
   const handleDownloadPDF = (inv: FiscalInvoice) => {
     downloadInvoicePDF(inv);
@@ -186,9 +185,7 @@ export default function Invoices() {
           </thead>
           <tbody className="divide-y divide-border/50">
             {filtered.map((inv, i) => {
-              const remaining = Math.max(0, inv.total - inv.paid);
               const isExpanded = expandedInvoice === inv.id;
-              const invPayments = invoicePayments(inv.id);
 
               return (
                 <motion.tr
@@ -283,24 +280,7 @@ export default function Invoices() {
                             </div>
                           </div>
 
-                          <div>
-                            <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Historiku i pagesave</h4>
-                            {invPayments.length > 0 ? (
-                              <div className="space-y-1.5">
-                                {invPayments.map((pay) => (
-                                  <div key={pay.id} className="flex justify-between text-sm">
-                                    <span className="text-foreground">{pay.date} <span className="text-xs text-muted-foreground">({paymentMethodLabels[pay.method]})</span></span>
-                                    <span className="font-mono tabular-nums text-emerald-600">€{pay.amount.toFixed(2)}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">Asnjë pagesë e regjistruar.</p>
-                            )}
-                            {remaining > 0 && (
-                              <Button size="sm" className="mt-3 gap-1.5"><Plus className="h-3 w-3" />Regjistro Pagesë</Button>
-                            )}
-                          </div>
+
 
                           <div>
                             <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Detaje klinike</h4>
