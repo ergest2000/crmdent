@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { Search, Plus, Download, Mail, Eye, ChevronDown, FileText, Printer, Pencil, Trash2 } from "lucide-react";
+import { Search, Plus, Download, Eye, ChevronDown, Printer, Pencil, Trash2 } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { exportPDF, exportCSV } from "@/lib/export-utils";
-import { statusLabels } from "@/lib/mock-data";
 import { clinicConfig } from "@/lib/invoice-utils";
 import { downloadInvoicePDF, generateInvoicePDF } from "@/lib/invoice-pdf";
 import { useInvoiceStore } from "@/stores/invoice-store";
 import { InvoicePreview } from "@/components/InvoicePreview";
 import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
-import { StatusBadge } from "@/components/StatusBadge";
 import { motion } from "framer-motion";
 import { clinicalTransition } from "@/lib/motion";
 import { Input } from "@/components/ui/input";
@@ -22,11 +20,8 @@ import {
 import { toast } from "@/hooks/use-toast";
 import type { FiscalInvoice } from "@/lib/invoice-utils";
 
-type StatusFilter = "all" | "paid" | "partial" | "unpaid" | "overdue";
-
 export default function Invoices() {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [expandedInvoice, setExpandedInvoice] = useState<string | null>(null);
   const [previewInvoice, setPreviewInvoice] = useState<FiscalInvoice | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -36,28 +31,14 @@ export default function Invoices() {
   const deleteInvoice = useInvoiceStore((s) => s.deleteInvoice);
 
   const filtered = fiscalInvoices.filter((inv) => {
-    const matchesSearch =
-      inv.patientName.toLowerCase().includes(search.toLowerCase()) ||
-      inv.invoiceNumber.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || inv.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const q = search.toLowerCase();
+    return (
+      inv.patientName.toLowerCase().includes(q) ||
+      inv.invoiceNumber.toLowerCase().includes(q)
+    );
   });
 
-  const totals = {
-    total: fiscalInvoices.reduce((s, i) => s + i.total, 0),
-    paid: fiscalInvoices.reduce((s, i) => s + i.paid, 0),
-    unpaid: fiscalInvoices.reduce((s, i) => s + Math.max(0, i.total - i.paid), 0),
-    overdue: fiscalInvoices.filter((i) => i.status === "overdue").reduce((s, i) => s + (i.total - i.paid), 0),
-  };
-
-  const statusCounts = {
-    all: fiscalInvoices.length,
-    paid: fiscalInvoices.filter((i) => i.status === "paid").length,
-    partial: fiscalInvoices.filter((i) => i.status === "partial").length,
-    unpaid: fiscalInvoices.filter((i) => i.status === "unpaid").length,
-    overdue: fiscalInvoices.filter((i) => i.status === "overdue").length,
-  };
-
+  const totalFaturuar = fiscalInvoices.reduce((s, i) => s + i.total, 0);
 
   const handleDownloadPDF = (inv: FiscalInvoice) => {
     downloadInvoicePDF(inv);
@@ -89,7 +70,7 @@ export default function Invoices() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-base font-semibold text-foreground">Faturat & Pagesat</h1>
+          <h1 className="text-base font-semibold text-foreground">Faturat</h1>
           <p className="text-sm text-muted-foreground">
             {fiscalInvoices.length} fatura · NIPT: {clinicConfig.nipt}
           </p>
@@ -97,15 +78,41 @@ export default function Invoices() {
         <div className="flex gap-2">
           <ExportMenu
             onExportPDF={() => {
-              const config = { title: "Lista e Faturave", filename: "faturat", columns: [
-                { header: "Nr. Faturës", key: "invoiceNumber" }, { header: "Pacienti", key: "patient" }, { header: "Data", key: "date" }, { header: "Total", key: "total", align: "right" as const }, { header: "Paguar", key: "paid", align: "right" as const }, { header: "Statusi", key: "status" },
-              ], data: filtered.map((inv) => ({ invoiceNumber: inv.invoiceNumber, patient: inv.patientName, date: inv.date, total: `${inv.currencySymbol || "€"}${inv.total.toFixed(2)}`, paid: `${inv.currencySymbol || "€"}${inv.paid.toFixed(2)}`, status: inv.status })) };
+              const config = {
+                title: "Lista e Faturave",
+                filename: "faturat",
+                columns: [
+                  { header: "Nr. Faturës", key: "invoiceNumber" },
+                  { header: "Pacienti", key: "patient" },
+                  { header: "Data", key: "date" },
+                  { header: "Total", key: "total", align: "right" as const },
+                ],
+                data: filtered.map((inv) => ({
+                  invoiceNumber: inv.invoiceNumber,
+                  patient: inv.patientName,
+                  date: inv.date,
+                  total: `${inv.currencySymbol || "€"}${inv.total.toFixed(2)}`,
+                })),
+              };
               exportPDF(config);
             }}
             onExportCSV={() => {
-              const config = { title: "Lista e Faturave", filename: "faturat", columns: [
-                { header: "Nr. Faturës", key: "invoiceNumber" }, { header: "Pacienti", key: "patient" }, { header: "Data", key: "date" }, { header: "Total", key: "total" }, { header: "Paguar", key: "paid" }, { header: "Statusi", key: "status" },
-              ], data: filtered.map((inv) => ({ invoiceNumber: inv.invoiceNumber, patient: inv.patientName, date: inv.date, total: `${inv.currencySymbol || "€"}${inv.total.toFixed(2)}`, paid: `${inv.currencySymbol || "€"}${inv.paid.toFixed(2)}`, status: inv.status })) };
+              const config = {
+                title: "Lista e Faturave",
+                filename: "faturat",
+                columns: [
+                  { header: "Nr. Faturës", key: "invoiceNumber" },
+                  { header: "Pacienti", key: "patient" },
+                  { header: "Data", key: "date" },
+                  { header: "Total", key: "total" },
+                ],
+                data: filtered.map((inv) => ({
+                  invoiceNumber: inv.invoiceNumber,
+                  patient: inv.patientName,
+                  date: inv.date,
+                  total: `${inv.currencySymbol || "€"}${inv.total.toFixed(2)}`,
+                })),
+              };
               exportCSV(config);
             }}
           />
@@ -116,45 +123,12 @@ export default function Invoices() {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: "Totali i faturuar", value: totals.total, color: "text-foreground" },
-          { label: "Paguar", value: totals.paid, color: "text-emerald-600" },
-          { label: "Pa paguar", value: totals.unpaid, color: "text-amber-600" },
-          { label: "Të vonuara", value: totals.overdue, color: "text-destructive" },
-        ].map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...clinicalTransition, delay: i * 0.05 }}
-            className="rounded-card bg-card p-4 shadow-subtle"
-          >
-            <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
-            <p className={`text-xl font-semibold tabular-nums font-mono ${stat.color}`}>
-              €{stat.value.toFixed(2)}
-            </p>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Status Tabs */}
-      <div className="flex items-center gap-1 border-b border-border/50 pb-px">
-        {(["all", "paid", "partial", "unpaid", "overdue"] as StatusFilter[]).map((status) => (
-          <button
-            key={status}
-            onClick={() => setStatusFilter(status)}
-            className={`px-3 py-2 text-sm transition-colors duration-150 border-b-2 -mb-px ${
-              statusFilter === status
-                ? "border-primary text-foreground font-medium"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {status === "all" ? "Të gjitha" : statusLabels[status]}
-            <span className="ml-1.5 text-xs text-muted-foreground">({statusCounts[status]})</span>
-          </button>
-        ))}
+      {/* Summary */}
+      <div className="rounded-card bg-card p-4 shadow-subtle max-w-xs">
+        <p className="text-xs text-muted-foreground mb-1">Totali i faturuar</p>
+        <p className="text-xl font-semibold tabular-nums font-mono text-foreground">
+          €{totalFaturuar.toFixed(2)}
+        </p>
       </div>
 
       {/* Search */}
@@ -178,8 +152,6 @@ export default function Invoices() {
               <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Pacienti</th>
               <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Data</th>
               <th className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Total (me TVSH)</th>
-              <th className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Paguar</th>
-              <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Statusi</th>
               <th className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Veprime</th>
             </tr>
           </thead>
@@ -195,7 +167,7 @@ export default function Invoices() {
                   transition={{ ...clinicalTransition, delay: i * 0.03 }}
                   className="group"
                 >
-                  <td colSpan={8} className="p-0">
+                  <td colSpan={6} className="p-0">
                     <div
                       className="flex items-center hover:bg-muted/30 transition-colors duration-150 cursor-pointer"
                       onClick={() => setExpandedInvoice(isExpanded ? null : inv.id)}
@@ -219,14 +191,6 @@ export default function Invoices() {
                           {inv.currencySymbol || clinicConfig.currencySymbol}{inv.total.toFixed(2)}
                         </span>
                         <p className="text-[10px] text-muted-foreground">TVSH: {inv.currencySymbol || clinicConfig.currencySymbol}{inv.vatAmount.toFixed(2)}</p>
-                      </div>
-                      <div className="px-4 py-3 flex-1 text-right">
-                        <span className="text-sm tabular-nums font-mono text-emerald-600">
-                          {inv.currencySymbol || clinicConfig.currencySymbol}{inv.paid.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="px-4 py-3 flex-1">
-                        <StatusBadge status={inv.status} />
                       </div>
                       <div className="px-4 py-3 flex-1 text-right">
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -255,7 +219,7 @@ export default function Invoices() {
                         animate={{ opacity: 1, height: "auto" }}
                         className="bg-muted/20 border-t border-border/30 px-8 py-4"
                       >
-                        <div className="grid grid-cols-3 gap-6">
+                        <div className="grid grid-cols-2 gap-6">
                           <div>
                             <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Artikujt</h4>
                             <div className="space-y-1.5">
@@ -280,10 +244,8 @@ export default function Invoices() {
                             </div>
                           </div>
 
-
-
                           <div>
-                            <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Detaje klinike</h4>
+                            <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Detaje</h4>
                             <div className="space-y-1.5 text-sm">
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">NIPT:</span>
@@ -314,6 +276,9 @@ export default function Invoices() {
             })}
           </tbody>
         </table>
+        {filtered.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground text-sm">Nuk u gjet asnjë faturë.</div>
+        )}
       </div>
 
       {/* Preview Dialog */}
