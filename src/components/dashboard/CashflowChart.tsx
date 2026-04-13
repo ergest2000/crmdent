@@ -1,41 +1,43 @@
 import { useMemo } from "react";
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-} from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
-import { CardDateFilter, useCardDateFilter } from "@/components/dashboard/DashboardDateFilter";
+import { CardDateFilter, useCardDateFilter, getPresetRange } from "@/components/dashboard/DashboardDateFilter";
+import { useInvoiceStore } from "@/stores/invoice-store";
+import { useFinanceStore } from "@/stores/finance-store";
 
-const monthlyData = [
-  { month: "Jan", value: 1800, date: "2026-01-15" },
-  { month: "Shk", value: 2400, date: "2026-02-15" },
-  { month: "Mar", value: 3200, date: "2026-03-15" },
-  { month: "Pri", value: 2800, date: "2026-04-15" },
-  { month: "Maj", value: 4500, date: "2026-05-15" },
-  { month: "Qer", value: 5200, date: "2026-06-15" },
-  { month: "Kor", value: 6800, date: "2026-07-15" },
-  { month: "Gus", value: 7200, date: "2026-08-15" },
-  { month: "Sht", value: 6400, date: "2026-09-15" },
-  { month: "Tet", value: 8100, date: "2026-10-15" },
-  { month: "Nën", value: 9300, date: "2026-11-15" },
-  { month: "Dhj", value: 10500, date: "2026-12-15" },
-];
+const monthNames = ["Jan","Shk","Mar","Pri","Maj","Qer","Kor","Gus","Sht","Tet","Nën","Dhj"];
 
 export function CashflowChart() {
   const { preset, dateRange, change } = useCardDateFilter("year");
+  const invoices = useInvoiceStore((s) => s.invoices);
+  const { payments } = useFinanceStore();
 
   const data = useMemo(() => {
-    const f = monthlyData.filter((d) => {
+    const yearRange = getPresetRange("year");
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const monthPayments = payments.filter((p) => {
+        const d = new Date(p.date);
+        return d.getMonth() === i && d.getFullYear() === new Date().getFullYear();
+      });
+      return {
+        month: monthNames[i],
+        value: monthPayments.reduce((s, p) => s + p.amount, 0),
+        date: `${new Date().getFullYear()}-${String(i + 1).padStart(2, "0")}-15`,
+      };
+    });
+
+    const filtered = months.filter((d) => {
       const date = new Date(d.date);
       return date >= dateRange.from && date <= dateRange.to;
     });
-    return f.length > 0 ? f : monthlyData;
-  }, [dateRange]);
+    return filtered.length > 0 ? filtered : months;
+  }, [payments, dateRange]);
 
   const total = data.reduce((s, d) => s + d.value, 0);
   const lastMonth = data[data.length - 1]?.value ?? 0;
   const prevMonth = data[data.length - 2]?.value ?? 1;
-  const pctChange = (((lastMonth - prevMonth) / prevMonth) * 100).toFixed(1);
+  const pctChange = prevMonth > 0 ? (((lastMonth - prevMonth) / prevMonth) * 100).toFixed(1) : "0";
   const isUp = lastMonth >= prevMonth;
 
   return (
@@ -49,7 +51,6 @@ export function CashflowChart() {
         <h3 className="text-sm font-medium text-foreground">Të ardhura</h3>
         <CardDateFilter value={preset} dateRange={dateRange} onChange={change} />
       </div>
-
       <div className="mb-3">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Totali i të ardhurave</p>
         <div className="flex items-baseline gap-2">
@@ -62,7 +63,6 @@ export function CashflowChart() {
           </span>
         </div>
       </div>
-
       <ResponsiveContainer width="100%" height={180}>
         <AreaChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
           <defs>
@@ -78,16 +78,7 @@ export function CashflowChart() {
             contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12, boxShadow: "var(--shadow-elevated)" }}
             formatter={(value: number) => [`€${value.toLocaleString()}`, "Total"]}
           />
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke="hsl(var(--primary))"
-            strokeWidth={2}
-            fill="url(#cashflowGradient)"
-            dot={false}
-            activeDot={{ r: 4, fill: "hsl(var(--primary))", strokeWidth: 0 }}
-            animationDuration={600}
-          />
+          <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#cashflowGradient)" dot={false} activeDot={{ r: 4, fill: "hsl(var(--primary))", strokeWidth: 0 }} animationDuration={600} />
         </AreaChart>
       </ResponsiveContainer>
     </motion.div>
