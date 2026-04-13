@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Receipt, ArrowUpRight } from "lucide-react";
-import { todayAppointments } from "@/lib/mock-data";
+import { useAppointmentStore } from "@/stores/appointment-store";
 import { useLeadStore } from "@/stores/lead-store";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CreateInvoiceDialog } from "@/components/CreateInvoiceDialog";
@@ -33,6 +33,10 @@ export default function Dashboard() {
     const t = setTimeout(() => setInitialLoading(false), 600);
     return () => clearTimeout(t);
   }, [fetchLeads]);
+
+  const appointments = useAppointmentStore((s) => s.appointments);
+  const today = new Date().toISOString().split("T")[0];
+  const todayAppointments = appointments.filter((a) => a.date === today);
 
   const handleCreateInvoice = (apt: typeof todayAppointments[0]) => {
     setInvoicePreselect({ patientId: apt.patientId, treatment: apt.treatment, dentist: apt.dentist });
