@@ -1,299 +1,204 @@
-import { useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, Phone, Mail, MapPin, Calendar, FileText, User, Users, Download, ClipboardList } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Search, Plus, Filter, Edit, Trash2, Eye } from "lucide-react";
 import { usePatientStore } from "@/stores/patient-store";
-import { useAppointmentStore } from "@/stores/appointment-store";
-import { useInvoiceStore } from "@/stores/invoice-store";
+import { ExportMenu } from "@/components/ExportMenu";
+import { exportPDF, exportCSV } from "@/lib/export-utils";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PatientDialog } from "@/components/PatientDialog";
 import { motion } from "framer-motion";
 import { clinicalTransition } from "@/lib/motion";
-import { useState } from "react";
-import { PatientDialog } from "@/components/PatientDialog";
-import { DentalChart } from "@/components/DentalChart";
-import { PatientAttachments } from "@/components/patient/PatientAttachments";
-import { TreatmentPlanSection } from "@/components/patient/TreatmentPlanSection";
-
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { generateInvoicePDF } from "@/lib/invoice-pdf";
 
-
-export default function PatientProfile() {
-  const { id } = useParams<{ id: string }>();
+export default function Patients() {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editPatient, setEditPatient] = useState<any>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const navigate = useNavigate();
+
   const patients = usePatientStore((s) => s.patients);
-  const updatePatient = usePatientStore((s) => s.updatePatient);
-  const allAppointments = useAppointmentStore((s) => s.appointments);
-  const allInvoices = useInvoiceStore((s) => s.invoices);
+  const deletePatient = usePatientStore((s) => s.deletePatient);
 
-  const patient = useMemo(() => patients.find((p) => p.id === id), [patients, id]);
-  const appointments = useMemo(() => allAppointments.filter((a) => a.patientId === id), [allAppointments, id]);
-  const invoices = useMemo(() => allInvoices.filter((inv) => inv.patientId === id), [allInvoices, id]);
-  const [editOpen, setEditOpen] = useState(false);
+  const filtered = patients.filter((p) => {
+    const matchSearch = `${p.firstName} ${p.lastName} ${p.id}`.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === "all" || p.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
 
-  if (!patient) {
-    return (
-      <div className="p-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/patients")} className="gap-1.5 mb-4">
-          <ArrowLeft className="h-4 w-4" /> Kthehu
-        </Button>
-        <p className="text-muted-foreground">Pacienti nuk u gjet.</p>
-      </div>
-    );
-  }
+  const handleEdit = (p: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditPatient(p);
+    setDialogOpen(true);
+  };
 
-  const today = new Date().toISOString().split("T")[0];
-  const pastAppointments = appointments.filter((a) => a.date < today || a.status === "completed");
-  const futureAppointments = appointments.filter((a) => a.date >= today && a.status !== "completed");
+  const handleDelete = () => {
+    if (deleteId) {
+      deletePatient(deleteId);
+      toast({ title: "Pacienti u fshi" });
+      setDeleteId(null);
+    }
+  };
 
   return (
-    <div className="p-6 space-y-5 max-w-7xl">
-      {/* Header */}
+    <div className="p-6 space-y-4 max-w-7xl">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-base font-semibold text-foreground">Pacientët</h1>
+          <p className="text-sm text-muted-foreground">{patients.length} pacientë të regjistruar</p>
+        </div>
+        <div className="flex gap-2">
+          <ExportMenu
+            onExportPDF={() => {
+              const config = {
+                title: "Lista e Pacientëve",
+                filename: "pacientet",
+                columns: [
+                  { header: "ID", key: "id" },
+                  { header: "Emri", key: "name" },
+                  { header: "Telefoni", key: "phone" },
+                  { header: "Email", key: "email" },
+                  { header: "Vizita e fundit", key: "lastVisit" },
+                  { header: "Balanca", key: "balance", align: "right" as const },
+                  { header: "Statusi", key: "status" },
+                ],
+                data: filtered.map((p) => ({ id: p.id, name: `${p.firstName} ${p.lastName}`, phone: p.phone, email: p.email, lastVisit: p.lastVisit, balance: `€${p.balance.toFixed(2)}`, status: p.status })),
+              };
+              exportPDF(config);
+            }}
+            onExportCSV={() => {
+              const config = {
+                title: "Lista e Pacientëve",
+                filename: "pacientet",
+                columns: [
+                  { header: "ID", key: "id" },
+                  { header: "Emri", key: "name" },
+                  { header: "Telefoni", key: "phone" },
+                  { header: "Email", key: "email" },
+                  { header: "Vizita e fundit", key: "lastVisit" },
+                  { header: "Balanca", key: "balance" },
+                  { header: "Statusi", key: "status" },
+                ],
+                data: filtered.map((p) => ({ id: p.id, name: `${p.firstName} ${p.lastName}`, phone: p.phone, email: p.email, lastVisit: p.lastVisit, balance: `€${p.balance.toFixed(2)}`, status: p.status })),
+              };
+              exportCSV(config);
+            }}
+          />
+          <Button size="sm" className="gap-1.5" onClick={() => { setEditPatient(null); setDialogOpen(true); }}>
+            <Plus className="h-3.5 w-3.5" />
+            Shto Pacient
+          </Button>
+        </div>
+      </div>
+
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/patients")} className="h-8 w-8">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-semibold">
-          {patient.firstName[0]}{patient.lastName[0]}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Kërko me emër ose ID..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
         </div>
-        <div className="flex-1">
-          <h1 className="text-base font-semibold text-foreground">{patient.firstName} {patient.lastName}</h1>
-          <p className="text-sm text-muted-foreground">{patient.id} · Regjistruar {patient.lastVisit}</p>
-        </div>
-        <StatusBadge status={patient.status} />
-        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => navigate(`/patients/${patient.id}/intake`)}>
-          <ClipboardList className="h-3.5 w-3.5" /> Formulari
-        </Button>
-        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditOpen(true)}>
-          <Edit className="h-3.5 w-3.5" /> Edito
-        </Button>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[140px] h-9 text-sm">
+            <Filter className="h-3.5 w-3.5 mr-1.5" />
+            <SelectValue placeholder="Filtro" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Të gjitha</SelectItem>
+            <SelectItem value="active">Aktivë</SelectItem>
+            <SelectItem value="suspended">Pezulluar</SelectItem>
+            <SelectItem value="archived">Arkivuar</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Personal info cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { icon: Phone, label: "Telefoni", value: patient.phone || "—" },
-          { icon: Mail, label: "Email", value: patient.email || "—" },
-          { icon: Calendar, label: "Data e lindjes", value: patient.dateOfBirth || "—" },
-          { icon: MapPin, label: "Adresa", value: patient.address || "—" },
-        ].map((item, i) => (
-          <motion.div key={item.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...clinicalTransition, delay: i * 0.05 }} className="rounded-card bg-card p-4 shadow-subtle">
-            <div className="flex items-center gap-2 text-muted-foreground mb-2"><item.icon className="h-3.5 w-3.5" /><span className="text-xs">{item.label}</span></div>
-            <p className="text-sm font-medium text-foreground">{item.value}</p>
-          </motion.div>
-        ))}
+      <div className="rounded-card bg-card shadow-subtle overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-border/50">
+              <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Pacienti</th>
+              <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">ID</th>
+              <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Kontakti</th>
+              <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Vizita e fundit</th>
+              <th className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Balanca</th>
+              <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Statusi</th>
+              <th className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Veprime</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/50">
+            {filtered.map((p, i) => (
+              <motion.tr
+                key={p.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ ...clinicalTransition, delay: i * 0.03 }}
+                className="hover:bg-muted/30 transition-colors duration-150 cursor-pointer group"
+                onClick={() => navigate(`/app/patients/${p.id}`)}
+              >
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                      {p.firstName[0]}{p.lastName[0]}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{p.firstName} {p.lastName}</p>
+                      {p.companion && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">👤 {p.companion}</p>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3"><span className="text-xs font-mono text-muted-foreground">{p.id}</span></td>
+                <td className="px-4 py-3">
+                  <p className="text-sm text-foreground">{p.phone}</p>
+                  <p className="text-xs text-muted-foreground">{p.email}</p>
+                </td>
+                <td className="px-4 py-3"><span className="text-sm tabular-nums text-foreground">{p.lastVisit}</span></td>
+                <td className="px-4 py-3 text-right">
+                  <span className={`text-sm font-medium tabular-nums font-mono ${p.balance > 0 ? "text-destructive" : "text-foreground"}`}>
+                    €{p.balance.toFixed(2)}
+                  </span>
+                </td>
+                <td className="px-4 py-3"><StatusBadge status={p.status} /></td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => navigate(`/app/patients/${p.id}`)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Shiko">
+                      <Eye className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={(e) => handleEdit(p, e)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Edito">
+                      <Edit className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); setDeleteId(p.id); }} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-destructive transition-colors" title="Fshi">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </td>
+              </motion.tr>
+            ))}
+          </tbody>
+        </table>
+        {filtered.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground text-sm">Nuk u gjet asnjë pacient.</div>
+        )}
       </div>
 
-      {/* Extra info row */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-card bg-card p-4 shadow-subtle">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2"><User className="h-3.5 w-3.5" /><span className="text-xs">Gjinia</span></div>
-          <p className="text-sm font-medium text-foreground">{patient.gender === "M" ? "Mashkull" : patient.gender === "F" ? "Femër" : "—"}</p>
-        </div>
-        <div className="rounded-card bg-card p-4 shadow-subtle">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2"><Calendar className="h-3.5 w-3.5" /><span className="text-xs">Vizita e fundit</span></div>
-          <p className="text-sm font-medium text-foreground">{patient.lastVisit}</p>
-        </div>
-        <div className="rounded-card bg-card p-4 shadow-subtle">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2"><FileText className="h-3.5 w-3.5" /><span className="text-xs">Balanca</span></div>
-          <p className={`text-sm font-medium font-mono ${patient.balance > 0 ? "text-destructive" : "text-foreground"}`}>€{patient.balance.toFixed(2)}</p>
-        </div>
-      </div>
+      <PatientDialog open={dialogOpen} onOpenChange={setDialogOpen} editPatient={editPatient} />
 
-      {/* Companion info */}
-      {patient.companion && (
-        <div className="rounded-card bg-blue-50 border border-blue-200 p-3 flex items-center gap-3">
-          <Users className="h-4 w-4 text-blue-600 shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-blue-700">Shoqëruesi</p>
-            <p className="text-sm text-blue-600">{patient.companion}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Attachments — always visible at top */}
-      <PatientAttachments patient={patient} />
-
-      {/* Tabs */}
-      <Tabs defaultValue="dental" className="w-full">
-        <TabsList className="bg-muted/50 flex-wrap h-auto gap-1 p-1">
-          <TabsTrigger value="dental" className="text-xs">Skema Dentare</TabsTrigger>
-          <TabsTrigger value="treatment-plan" className="text-xs">Plani i Trajtimit</TabsTrigger>
-          <TabsTrigger value="treatments" className="text-xs">Historiku ({patient.dentalRecords.length})</TabsTrigger>
-          <TabsTrigger value="appointments" className="text-xs">Takimet ({appointments.length})</TabsTrigger>
-          <TabsTrigger value="invoices" className="text-xs">Faturat ({invoices.length})</TabsTrigger>
-        </TabsList>
-
-        {/* Dental Chart */}
-        <TabsContent value="dental" className="mt-4">
-          <DentalChart patientId={patient.id} />
-        </TabsContent>
-
-        {/* Treatment Plan */}
-        <TabsContent value="treatment-plan" className="mt-4">
-          <TreatmentPlanSection patientId={patient.id} />
-        </TabsContent>
-
-
-
-
-        {/* Treatment History */}
-        <TabsContent value="treatments" className="mt-4">
-          <div className="rounded-card bg-card shadow-subtle overflow-hidden">
-            {patient.dentalRecords.length > 0 ? (
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border/50">
-                    <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Dhëmbi</th>
-                    <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Trajtimi</th>
-                    <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Data</th>
-                    <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Dentisti</th>
-                    <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Shënime</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {[...patient.dentalRecords].reverse().map((r, i) => {
-                    const condLabels: Record<string, string> = {
-                      healthy: "I shëndetshëm", caries: "Karies", filling: "Mbushje",
-                      "root-canal": "Trajtim kanali", implant: "Implant", crown: "Kurorë",
-                      extraction: "Nxjerrje", "in-treatment": "Në trajtim",
-                    };
-                    return (
-                      <tr key={i} className="hover:bg-muted/30">
-                        <td className="px-4 py-3 text-sm font-mono text-foreground">#{r.toothNumber}</td>
-                        <td className="px-4 py-3"><StatusBadge status={r.condition} /></td>
-                        <td className="px-4 py-3 text-sm text-foreground">{r.date}</td>
-                        <td className="px-4 py-3 text-sm text-foreground">{r.dentist}</td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground">{r.notes || "—"}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            ) : (
-              <div className="p-8 text-center text-muted-foreground text-sm">Nuk ka trajtime të regjistruara. Përdorni grafin dentare për të shtuar trajtime.</div>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Appointments */}
-        <TabsContent value="appointments" className="mt-4 space-y-4">
-          {/* Upcoming */}
-          <div>
-            <h4 className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Vizitat e ardhshme ({futureAppointments.length})</h4>
-            <div className="rounded-card bg-card shadow-subtle overflow-hidden">
-              {futureAppointments.length > 0 ? (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border/50">
-                      <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Data</th>
-                      <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Ora</th>
-                      <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Trajtimi</th>
-                      <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Dentisti</th>
-                      <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Statusi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/50">
-                    {futureAppointments.map((a) => (
-                      <tr key={a.id} className="hover:bg-muted/30">
-                        <td className="px-4 py-3 text-sm text-foreground">{a.date}</td>
-                        <td className="px-4 py-3 text-sm font-mono text-foreground">{a.time}</td>
-                        <td className="px-4 py-3 text-sm text-foreground">{a.treatment}</td>
-                        <td className="px-4 py-3 text-sm text-foreground">{a.dentist}</td>
-                        <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="p-6 text-center text-muted-foreground text-sm">Nuk ka vizita të ardhshme.</div>
-              )}
-            </div>
-          </div>
-
-          {/* Past */}
-          <div>
-            <h4 className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Vizitat e kaluara ({pastAppointments.length})</h4>
-            <div className="rounded-card bg-card shadow-subtle overflow-hidden">
-              {pastAppointments.length > 0 ? (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border/50">
-                      <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Data</th>
-                      <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Ora</th>
-                      <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Trajtimi</th>
-                      <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Dentisti</th>
-                      <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Statusi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/50">
-                    {pastAppointments.map((a) => (
-                      <tr key={a.id} className="hover:bg-muted/30">
-                        <td className="px-4 py-3 text-sm text-foreground">{a.date}</td>
-                        <td className="px-4 py-3 text-sm font-mono text-foreground">{a.time}</td>
-                        <td className="px-4 py-3 text-sm text-foreground">{a.treatment}</td>
-                        <td className="px-4 py-3 text-sm text-foreground">{a.dentist}</td>
-                        <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="p-6 text-center text-muted-foreground text-sm">Nuk ka vizita të kaluara.</div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Invoices */}
-        <TabsContent value="invoices" className="mt-4">
-          <div className="rounded-card bg-card shadow-subtle overflow-hidden">
-            {invoices.length > 0 ? (
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border/50">
-                    <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Nr. Faturës</th>
-                    <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Data</th>
-                    <th className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Total</th>
-                    <th className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Paguar</th>
-                    <th className="text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Statusi</th>
-                    <th className="text-right text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-4 py-2.5">Veprime</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {invoices.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-muted/30">
-                      <td className="px-4 py-3 text-xs font-mono text-muted-foreground">{inv.invoiceNumber}</td>
-                      <td className="px-4 py-3 text-sm text-foreground">{inv.date}</td>
-                      <td className="px-4 py-3 text-right text-sm font-mono text-foreground">€{inv.total.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-right text-sm font-mono text-emerald-600">€{inv.paid.toFixed(2)}</td>
-                      <td className="px-4 py-3"><StatusBadge status={inv.status} /></td>
-                      <td className="px-4 py-3 text-right">
-                        <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={() => {
-                          generateInvoicePDF(inv);
-                          toast({ title: "PDF u shkarkua" });
-                        }}>
-                          <Download className="h-3 w-3" /> PDF
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className="p-8 text-center text-muted-foreground text-sm">Nuk ka fatura të regjistruara.</div>
-            )}
-          </div>
-        </TabsContent>
-
-
-
-      </Tabs>
-
-      {/* Edit Patient Dialog */}
-      <PatientDialog open={editOpen} onOpenChange={setEditOpen} editPatient={patient} />
-
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmo fshirjen</AlertDialogTitle>
+            <AlertDialogDescription>Jeni i sigurt që doni të fshini këtë pacient? Ky veprim nuk mund të kthehet.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anulo</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Fshi</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
