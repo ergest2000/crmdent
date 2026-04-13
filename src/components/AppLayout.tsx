@@ -1,8 +1,31 @@
+import { useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet } from "react-router-dom";
+import { useDoctorStore } from "@/stores/doctor-store";
+import { usePatientStore } from "@/stores/patient-store";
+import { useStaffStore } from "@/stores/staff-store";
+import { useTreatmentStore } from "@/stores/treatment-store";
+import { useAppointmentStore } from "@/stores/appointment-store";
+import { useProductStore } from "@/stores/product-store";
 
 export function AppLayout() {
+  const fetchDoctors = useDoctorStore((s) => s.fetchDoctors);
+  const fetchPatients = usePatientStore((s) => s.fetchPatients);
+  const fetchStaff = useStaffStore((s) => s.fetchStaff);
+  const fetchTreatments = useTreatmentStore((s) => s.fetchTreatments);
+  const fetchAppointments = useAppointmentStore((s) => s.fetchAppointments);
+  const fetchProducts = useProductStore((s) => s.fetchProducts);
+
+  useEffect(() => {
+    fetchDoctors();
+    fetchPatients();
+    fetchStaff();
+    fetchTreatments();
+    fetchAppointments();
+    fetchProducts();
+  }, []);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
