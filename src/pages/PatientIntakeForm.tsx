@@ -104,7 +104,7 @@ export default function PatientIntakeForm() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/patients/${id}`)} className="gap-1.5">
+          <Button variant="ghost" size="sm" onClick={() => navigate(`/app/patients/${id}`)} className="gap-1.5">
             <ArrowLeft className="h-4 w-4" /> Profili
           </Button>
           <div>
