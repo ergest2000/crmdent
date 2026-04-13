@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { PatientDialog } from "@/components/PatientDialog";
 import { DentalChart } from "@/components/DentalChart";
 import { DentalHistory } from "@/components/dental/DentalHistory";
-import { TreatmentPlanSection } from "@/components/patient/TreatmentPlanSection";
+import { SimpleTreatmentPlan } from "@/components/patient/SimpleTreatmentPlan";
 import { PatientAttachments } from "@/components/patient/PatientAttachments";
 import { PatientCommunication } from "@/components/PatientCommunication";
 import { motion } from "framer-motion";
@@ -189,7 +189,7 @@ export default function PatientProfile() {
         </TabsContent>
 
         <TabsContent value="treatments" className="mt-4">
-          <TreatmentPlanSection patientId={patient.id} />
+          <SimpleTreatmentPlan patientId={patient.id} />
         </TabsContent>
 
         <TabsContent value="history" className="mt-4">
