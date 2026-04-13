@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { motion } from "framer-motion";
-import { expenses } from "@/lib/mock-data";
+import { useFinanceStore } from "@/stores/finance-store";
 import { isInRange } from "@/lib/date-filter";
 import { CardDateFilter, useCardDateFilter } from "@/components/dashboard/DashboardDateFilter";
 
@@ -13,24 +13,20 @@ const categoryColors: Record<string, string> = {
   equipment: "hsl(30, 85%, 55%)",
   other: "hsl(45, 80%, 50%)",
 };
-
 const categoryLabels: Record<string, string> = {
-  supplies: "Furnizime",
-  salary: "Paga",
-  rent: "Qira",
-  utilities: "Shërbime",
-  equipment: "Pajisje",
-  other: "Të tjera",
+  supplies: "Furnizime", salary: "Paga", rent: "Qira",
+  utilities: "Shërbime", equipment: "Pajisje", other: "Të tjera",
 };
 
 export function ExpensesDonut() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const { preset, dateRange, change } = useCardDateFilter("month");
+  const { expenses } = useFinanceStore();
 
   const filtered = useMemo(() => {
     const f = expenses.filter((e) => isInRange(e.date, dateRange));
     return f.length > 0 ? f : expenses;
-  }, [dateRange]);
+  }, [expenses, dateRange]);
 
   const total = filtered.reduce((s, e) => s + e.amount, 0);
   const grouped = filtered.reduce<Record<string, number>>((acc, e) => {
@@ -41,7 +37,7 @@ export function ExpensesDonut() {
   const data = Object.entries(grouped)
     .map(([name, value]) => ({
       name, label: categoryLabels[name] || name, value,
-      pct: ((value / total) * 100).toFixed(0),
+      pct: total > 0 ? ((value / total) * 100).toFixed(0) : "0",
       color: categoryColors[name] || "hsl(var(--muted))",
     }))
     .sort((a, b) => b.value - a.value);
@@ -57,7 +53,6 @@ export function ExpensesDonut() {
         <h3 className="text-sm font-medium text-foreground">Shpenzimet</h3>
         <CardDateFilter value={preset} dateRange={dateRange} onChange={change} />
       </div>
-
       <div className="flex items-center gap-4">
         <div className="relative w-[140px] h-[140px] shrink-0">
           <ResponsiveContainer width="100%" height="100%">
@@ -89,7 +84,6 @@ export function ExpensesDonut() {
           ))}
         </div>
       </div>
-
       <div className="mt-4 pt-3 border-t border-border/50">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Top shpenzime</p>
         <div className="grid grid-cols-2 gap-2">
