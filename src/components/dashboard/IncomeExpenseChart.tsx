@@ -1,41 +1,36 @@
 import { useMemo } from "react";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { CardDateFilter, useCardDateFilter } from "@/components/dashboard/DashboardDateFilter";
+import { useFinanceStore } from "@/stores/finance-store";
 
-const allData = [
-  { month: "Jan", income: 4200, expense: 3100, date: "2026-01-15" },
-  { month: "Shk", income: 5100, expense: 3800, date: "2026-02-15" },
-  { month: "Mar", income: 6300, expense: 4500, date: "2026-03-15" },
-  { month: "Pri", income: 5800, expense: 4200, date: "2026-04-15" },
-  { month: "Maj", income: 7200, expense: 5100, date: "2026-05-15" },
-  { month: "Qer", income: 8400, expense: 6000, date: "2026-06-15" },
-  { month: "Kor", income: 7600, expense: 5500, date: "2026-07-15" },
-  { month: "Gus", income: 6900, expense: 4800, date: "2026-08-15" },
-  { month: "Sht", income: 7800, expense: 5300, date: "2026-09-15" },
-  { month: "Tet", income: 6200, expense: 4100, date: "2026-10-15" },
-  { month: "Nën", income: 7800, expense: 5300, date: "2026-11-15" },
-  { month: "Dhj", income: 8500, expense: 6200, date: "2026-12-15" },
-];
+const monthNames = ["Jan","Shk","Mar","Pri","Maj","Qer","Kor","Gus","Sht","Tet","Nën","Dhj"];
 
 export function IncomeExpenseChart() {
   const { preset, dateRange, change } = useCardDateFilter("month");
+  const { payments, expenses } = useFinanceStore();
 
   const data = useMemo(() => {
-    const f = allData.filter((d) => {
+    const year = new Date().getFullYear();
+    return Array.from({ length: 12 }, (_, i) => {
+      const income = payments
+        .filter((p) => { const d = new Date(p.date); return d.getMonth() === i && d.getFullYear() === year; })
+        .reduce((s, p) => s + p.amount, 0);
+      const expense = expenses
+        .filter((e) => { const d = new Date(e.date); return d.getMonth() === i && d.getFullYear() === year; })
+        .reduce((s, e) => s + e.amount, 0);
+      return { month: monthNames[i], income, expense, date: `${year}-${String(i + 1).padStart(2, "0")}-15` };
+    }).filter((d) => {
       const date = new Date(d.date);
       return date >= dateRange.from && date <= dateRange.to;
     });
-    return f.length > 0 ? f : allData.slice(-6);
-  }, [dateRange]);
+  }, [payments, expenses, dateRange]);
 
   const totalIncome = data.reduce((s, d) => s + d.income, 0);
   const totalExpense = data.reduce((s, d) => s + d.expense, 0);
-  const incomeChange = 4.5;
-  const expenseChange = -2.4;
+  const profit = totalIncome - totalExpense;
+  const profitPct = totalIncome > 0 ? ((profit / totalIncome) * 100).toFixed(1) : "0";
 
   return (
     <motion.div
@@ -48,7 +43,6 @@ export function IncomeExpenseChart() {
         <h3 className="text-sm font-medium text-foreground">Të ardhura & Shpenzime</h3>
         <CardDateFilter value={preset} dateRange={dateRange} onChange={change} />
       </div>
-
       <div className="flex gap-6 mb-3">
         <div>
           <div className="flex items-center gap-1 mb-0.5">
@@ -56,9 +50,9 @@ export function IncomeExpenseChart() {
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Të ardhura</span>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-lg font-semibold tabular-nums font-mono text-foreground">€{(totalIncome / 1000).toFixed(1)}k</span>
+            <span className="text-lg font-semibold tabular-nums font-mono text-foreground">€{totalIncome.toLocaleString()}</span>
             <span className="text-[11px] font-medium text-status-completed flex items-center gap-0.5">
-              <TrendingUp className="h-3 w-3" />{incomeChange}%
+              <TrendingUp className="h-3 w-3" />{profitPct}%
             </span>
           </div>
         </div>
@@ -68,14 +62,13 @@ export function IncomeExpenseChart() {
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Shpenzime</span>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-lg font-semibold tabular-nums font-mono text-foreground">€{(totalExpense / 1000).toFixed(1)}k</span>
+            <span className="text-lg font-semibold tabular-nums font-mono text-foreground">€{totalExpense.toLocaleString()}</span>
             <span className="text-[11px] font-medium text-destructive flex items-center gap-0.5">
-              <TrendingDown className="h-3 w-3" />{Math.abs(expenseChange)}%
+              <TrendingDown className="h-3 w-3" />{totalExpense > 0 ? ((totalExpense / (totalIncome || 1)) * 100).toFixed(1) : "0"}%
             </span>
           </div>
         </div>
       </div>
-
       <ResponsiveContainer width="100%" height={180}>
         <BarChart data={data} barGap={2}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
