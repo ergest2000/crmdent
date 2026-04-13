@@ -136,7 +136,7 @@ export default function Patients() {
                 animate={{ opacity: 1 }}
                 transition={{ ...clinicalTransition, delay: i * 0.03 }}
                 className="hover:bg-muted/30 transition-colors duration-150 cursor-pointer group"
-                onClick={() => navigate(`/patients/${p.id}`)}
+                onClick={() => navigate(`/app/patients/${p.id}`)}
               >
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
@@ -165,7 +165,7 @@ export default function Patients() {
                 <td className="px-4 py-3"><StatusBadge status={p.status} /></td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => navigate(`/patients/${p.id}`)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Shiko">
+                    <button onClick={() => navigate(`/app/patients/${p.id}`)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Shiko">
                       <Eye className="h-3.5 w-3.5" />
                     </button>
                     <button onClick={(e) => handleEdit(p, e)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Edito">
