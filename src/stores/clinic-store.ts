@@ -5,13 +5,14 @@ export interface Clinic {
   id: string;
   name: string;
   logo_url: string | null;
+  eur_to_all: number; // 1 € = sa Lekë
 }
 
 interface ClinicStore {
   clinic: Clinic | null;
   loading: boolean;
   fetchClinic: () => Promise<void>;
-  updateClinic: (data: { name?: string; logo_url?: string | null }) => Promise<boolean>;
+  updateClinic: (data: Partial<Pick<Clinic, "name" | "logo_url" | "eur_to_all">>) => Promise<boolean>;
   uploadLogo: (file: File) => Promise<string | null>;
 }
 
@@ -41,12 +42,13 @@ export const useClinicStore = create<ClinicStore>((set, get) => {
 
       const { data, error } = await supabase
         .from("clinics")
-        .select("id, name, logo_url")
+        .select("id, name, logo_url, eur_to_all")
         .eq("id", clinicId)
         .maybeSingle();
       if (error) console.error("fetchClinic error:", error.message);
 
-      set({ clinic: (data as Clinic) || null, loading: false });
+      const c = data as any;
+      set({ clinic: c ? { ...c, eur_to_all: c.eur_to_all ?? 100 } : null, loading: false });
     },
 
     updateClinic: async (data) => {
