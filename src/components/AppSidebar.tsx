@@ -6,6 +6,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth-store";
+import { useClinicStore } from "@/stores/clinic-store";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
@@ -76,10 +77,10 @@ export function AppSidebar() {
   const profile = useAuthStore((s) => s.profile);
   const logout = useAuthStore((s) => s.logout);
   const isSuperAdmin = useAuthStore((s) => s.isSuperAdmin);
+  const clinic = useClinicStore((s) => s.clinic);
 
   const isSA = isSuperAdmin();
 
-  // Show all items — permissions checked by routes
   const allKeys = ["dashboard", "leads", "patients", "doctors", "appointments", "treatments"];
   const financeKeys = ["finance", "invoices", "stock", "reports"];
   const adminKeys = ["admin", "staff", "settings"];
@@ -88,14 +89,20 @@ export function AppSidebar() {
   const financeNav = isSA ? [] : financeKeys.map((k) => (clinicNavItems as any)[k]);
   const adminNav = isSA ? [] : adminKeys.map((k) => (clinicNavItems as any)[k]);
 
+  const title = isSA ? "DenteOS" : (clinic?.name || "DenteOS");
+
   return (
     <Sidebar collapsible="icon" className="shadow-[inset_-1px_0_0_0_rgba(0,0,0,0.05)]">
       <SidebarHeader className="px-4 py-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-inner bg-primary text-primary-foreground text-sm font-semibold">D</div>
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-inner bg-primary text-primary-foreground text-sm font-semibold overflow-hidden">
+            {!isSA && clinic?.logo_url
+              ? <img src={clinic.logo_url} alt="logo" className="h-full w-full object-cover" />
+              : (title[0]?.toUpperCase() || "D")}
+          </div>
           {!collapsed && (
             <div>
-              <p className="text-sm font-semibold text-foreground">DenteOS</p>
+              <p className="text-sm font-semibold text-foreground">{title}</p>
               <p className="text-[11px] text-muted-foreground">
                 {isSA ? "Super Admin Panel" : "Klinika Dentare"}
               </p>
