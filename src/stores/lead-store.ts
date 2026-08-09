@@ -16,6 +16,8 @@ interface LeadStore {
   loading: boolean;
 
   fetchLeads: () => Promise<void>;
+  addLead: (data: { name: string; phone?: string; email?: string; channel: Channel; status?: LeadStatus; clinic_id?: string; notes?: string }) => Promise<void>;
+  deleteLead: (leadId: string) => Promise<void>;
   fetchMessages: (leadId: string) => Promise<void>;
   selectLead: (id: string | null) => void;
   updateLeadStatus: (leadId: string, status: LeadStatus) => Promise<void>;
@@ -27,141 +29,155 @@ interface LeadStore {
 }
 
 export const useLeadStore = create<LeadStore>((set, get) => {
-  // Set up realtime subscription
+  // Realtime subscription
   supabase
     .channel("leads-realtime")
     .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, () => {
-      // Re-fetch leads on any change
       get().fetchLeads();
     })
     .subscribe();
 
   return {
-  leads: [],
-  messages: [],
-  selectedLeadId: null,
-  loading: false,
+    leads: [],
+    messages: [],
+    selectedLeadId: null,
+    loading: false,
 
-  fetchLeads: async () => {
-    set({ loading: true });
-    const { data, error } = await supabase
-      .from("leads")
-      .select("*")
-      .order("updated_at", { ascending: false });
+    fetchLeads: async () => {
+      set({ loading: true });
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("updated_at", { ascending: false });
 
-    if (!error && data) {
-      set({ leads: data, loading: false });
-    } else {
-      set({ loading: false });
-    }
-  },
+      if (!error && data) {
+        set({ leads: data, loading: false });
+      } else {
+        set({ loading: false });
+      }
+    },
 
-  fetchMessages: async (leadId) => {
-    const { data } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("lead_id", leadId)
-      .order("timestamp", { ascending: true });
+    addLead: async (data) => {
+      const { error } = await supabase.from("leads").insert({
+        name: data.name,
+        phone: data.phone || null,
+        email: data.email || null,
+        channel: data.channel,
+        status: data.status || "new",
+        notes: data.notes || null,
+        ...(data.clinic_id ? { clinic_id: data.clinic_id } : {}),
+      } as any);
+      if (error) { console.error("addLead error:", error.message); throw error; }
+      await get().fetchLeads();
+    },
 
-    if (data) {
+    deleteLead: async (leadId) => {
+      await supabase.from("leads").delete().eq("id", leadId);
+      set((state) => ({ leads: state.leads.filter((l) => l.id !== leadId) }));
+    },
+
+    fetchMessages: async (leadId) => {
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("lead_id", leadId)
+        .order("timestamp", { ascending: true });
+
+      if (data) {
+        set((state) => ({
+          messages: [
+            ...state.messages.filter((m) => m.lead_id !== leadId),
+            ...data,
+          ],
+        }));
+      }
+    },
+
+    selectLead: (id) => {
+      set({ selectedLeadId: id });
+      if (id) {
+        get().fetchMessages(id);
+        get().markMessagesRead(id);
+      }
+    },
+
+    updateLeadStatus: async (leadId, status) => {
+      await supabase.from("leads").update({ status }).eq("id", leadId);
       set((state) => ({
-        messages: [
-          ...state.messages.filter((m) => m.lead_id !== leadId),
-          ...data,
-        ],
+        leads: state.leads.map((l) => (l.id === leadId ? { ...l, status } : l)),
       }));
-    }
-  },
+    },
 
-  selectLead: (id) => {
-    set({ selectedLeadId: id });
-    if (id) {
-      get().fetchMessages(id);
-      get().markMessagesRead(id);
-    }
-  },
+    assignLead: async (leadId, staffId) => {
+      await supabase.from("leads").update({ assigned_to: staffId }).eq("id", leadId);
+      set((state) => ({
+        leads: state.leads.map((l) => (l.id === leadId ? { ...l, assigned_to: staffId } : l)),
+      }));
+    },
 
-  updateLeadStatus: async (leadId, status) => {
-    await supabase.from("leads").update({ status }).eq("id", leadId);
-    set((state) => ({
-      leads: state.leads.map((l) =>
-        l.id === leadId ? { ...l, status } : l
-      ),
-    }));
-  },
+    addMessage: async (leadId, content, direction) => {
+      const lead = get().leads.find((l) => l.id === leadId);
+      if (!lead) return;
 
-  assignLead: async (leadId, staffId) => {
-    await supabase.from("leads").update({ assigned_to: staffId }).eq("id", leadId);
-    set((state) => ({
-      leads: state.leads.map((l) =>
-        l.id === leadId ? { ...l, assigned_to: staffId } : l
-      ),
-    }));
-  },
+      const { data: msg } = await supabase
+        .from("messages")
+        .insert({
+          lead_id: leadId,
+          direction,
+          content,
+          channel: lead.channel,
+          read: true,
+        })
+        .select()
+        .single();
 
-  addMessage: async (leadId, content, direction) => {
-    const lead = get().leads.find((l) => l.id === leadId);
-    if (!lead) return;
+      if (msg) {
+        const newStatus = lead.status === "new" && direction === "outbound" ? "contacted" : lead.status;
+        await supabase
+          .from("leads")
+          .update({ last_message: content, status: newStatus })
+          .eq("id", leadId);
 
-    const { data: msg } = await supabase
-      .from("messages")
-      .insert({
-        lead_id: leadId,
-        direction,
-        content,
-        channel: lead.channel,
-        read: true,
-      })
-      .select()
-      .single();
+        set((state) => ({
+          messages: [...state.messages, msg],
+          leads: state.leads.map((l) =>
+            l.id === leadId ? { ...l, last_message: content, status: newStatus as LeadStatus } : l
+          ),
+        }));
+      }
+    },
 
-    if (msg) {
-      // Update lead last message + status
-      const newStatus = lead.status === "new" && direction === "outbound" ? "contacted" : lead.status;
+    markMessagesRead: async (leadId) => {
+      await supabase
+        .from("messages")
+        .update({ read: true })
+        .eq("lead_id", leadId)
+        .eq("read", false);
+
+      set((state) => ({
+        messages: state.messages.map((m) =>
+          m.lead_id === leadId ? { ...m, read: true } : m
+        ),
+      }));
+    },
+
+    getUnreadCount: (leadId) => {
+      return get().messages.filter(
+        (m) => m.lead_id === leadId && !m.read && m.direction === "inbound"
+      ).length;
+    },
+
+    convertToPatient: async (leadId) => {
       await supabase
         .from("leads")
-        .update({ last_message: content, status: newStatus })
+        .update({ status: "converted" as LeadStatus })
         .eq("id", leadId);
 
       set((state) => ({
-        messages: [...state.messages, msg],
         leads: state.leads.map((l) =>
-          l.id === leadId ? { ...l, last_message: content, status: newStatus as LeadStatus } : l
+          l.id === leadId ? { ...l, status: "converted" as LeadStatus } : l
         ),
       }));
-    }
-  },
-
-  markMessagesRead: async (leadId) => {
-    await supabase
-      .from("messages")
-      .update({ read: true })
-      .eq("lead_id", leadId)
-      .eq("read", false);
-
-    set((state) => ({
-      messages: state.messages.map((m) =>
-        m.lead_id === leadId ? { ...m, read: true } : m
-      ),
-    }));
-  },
-
-  getUnreadCount: (leadId) => {
-    return get().messages.filter(
-      (m) => m.lead_id === leadId && !m.read && m.direction === "inbound"
-    ).length;
-  },
-
-  convertToPatient: async (leadId) => {
-    await supabase
-      .from("leads")
-      .update({ status: "converted" as LeadStatus })
-      .eq("id", leadId);
-
-    set((state) => ({
-      leads: state.leads.map((l) =>
-        l.id === leadId ? { ...l, status: "converted" as LeadStatus } : l
-      ),
-    }));
-  },
-}});
+    },
+  };
+});
