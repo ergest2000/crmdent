@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound";
 import SuperAdminDashboard from "./pages/super-admin/SuperAdminDashboard";
 import SuperAdminAnalytics from "./pages/super-admin/SuperAdminAnalytics";
 import SuperAdminUsers from "./pages/super-admin/SuperAdminUsers";
+import SuperAdminLeads from "./pages/super-admin/SuperAdminLeads";
 
 const queryClient = new QueryClient();
 
@@ -68,11 +69,12 @@ const App = () => (
             <Route path="settings" element={<SettingsPage />} />
           </Route>
 
-          {/* Pjesa e super-admin-it (menaxhim klinikash + usera + statistika) */}
+          {/* Pjesa e super-admin-it (menaxhim klinikash + usera + leads + statistika) */}
           <Route path="/super-admin" element={<AppLayout />}>
             <Route index element={<SuperAdminDashboard />} />
             <Route path="analytics" element={<SuperAdminAnalytics />} />
             <Route path="users" element={<SuperAdminUsers />} />
+            <Route path="leads" element={<SuperAdminLeads />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
