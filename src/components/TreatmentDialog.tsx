@@ -21,17 +21,24 @@ export function TreatmentDialog({ open, onOpenChange, editTreatment }: Props) {
     name: editTreatment?.name || "",
     category: editTreatment?.category || "General",
     price: editTreatment?.price || 0,
+    priceAll: editTreatment?.priceAll || 0,
     duration: editTreatment?.duration || 30,
     description: editTreatment?.description || "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = {
+      ...form,
+      price: Number(form.price),
+      priceAll: Number(form.priceAll),
+      duration: Number(form.duration),
+    };
     if (editTreatment) {
-      updateTreatment(editTreatment.id, { ...form, price: Number(form.price), duration: Number(form.duration) });
+      updateTreatment(editTreatment.id, payload);
       toast({ title: "Trajtimi u përditësua" });
     } else {
-      addTreatment({ ...form, price: Number(form.price), duration: Number(form.duration) });
+      addTreatment(payload);
       toast({ title: "Trajtimi u shtua me sukses" });
     }
     onOpenChange(false);
@@ -65,9 +72,13 @@ export function TreatmentDialog({ open, onOpenChange, editTreatment }: Props) {
               <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} required className="h-9 text-sm" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Kohëzgjatja (min)</label>
-              <Input type="number" value={form.duration} onChange={(e) => setForm({ ...form, duration: Number(e.target.value) })} className="h-9 text-sm" />
+              <label className="text-xs text-muted-foreground mb-1 block">Çmimi (Lekë) *</label>
+              <Input type="number" value={form.priceAll} onChange={(e) => setForm({ ...form, priceAll: Number(e.target.value) })} required className="h-9 text-sm" />
             </div>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Kohëzgjatja (min)</label>
+            <Input type="number" value={form.duration} onChange={(e) => setForm({ ...form, duration: Number(e.target.value) })} className="h-9 text-sm" />
           </div>
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Përshkrimi</label>
