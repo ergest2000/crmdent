@@ -46,14 +46,14 @@ export default function Treatments() {
           <ExportMenu
             onExportPDF={() => {
               const config = { title: "Trajtimet & Shërbimet", filename: "trajtimet", columns: [
-                { header: "Emri", key: "name" }, { header: "Kategoria", key: "category" }, { header: "Çmimi", key: "price", align: "right" as const }, { header: "Kohëzgjatja", key: "duration", align: "right" as const },
-              ], data: filtered.map((t) => ({ name: t.name, category: t.category, price: `€${t.price}`, duration: `${t.duration} min` })) };
+                { header: "Emri", key: "name" }, { header: "Kategoria", key: "category" }, { header: "Çmimi (€)", key: "price", align: "right" as const }, { header: "Çmimi (Lekë)", key: "priceAll", align: "right" as const }, { header: "Kohëzgjatja", key: "duration", align: "right" as const },
+              ], data: filtered.map((t) => ({ name: t.name, category: t.category, price: `€${t.price}`, priceAll: `${t.priceAll} L`, duration: `${t.duration} min` })) };
               exportPDF(config);
             }}
             onExportCSV={() => {
               const config = { title: "Trajtimet & Shërbimet", filename: "trajtimet", columns: [
-                { header: "Emri", key: "name" }, { header: "Kategoria", key: "category" }, { header: "Çmimi", key: "price" }, { header: "Kohëzgjatja", key: "duration" },
-              ], data: filtered.map((t) => ({ name: t.name, category: t.category, price: `€${t.price}`, duration: `${t.duration} min` })) };
+                { header: "Emri", key: "name" }, { header: "Kategoria", key: "category" }, { header: "Çmimi (€)", key: "price" }, { header: "Çmimi (Lekë)", key: "priceAll" }, { header: "Kohëzgjatja", key: "duration" },
+              ], data: filtered.map((t) => ({ name: t.name, category: t.category, price: `€${t.price}`, priceAll: `${t.priceAll} L`, duration: `${t.duration} min` })) };
               exportCSV(config);
             }}
           />
@@ -95,7 +95,7 @@ export default function Treatments() {
             <p className="text-sm font-medium text-foreground mb-1">{t.name}</p>
             {t.description && <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{t.description}</p>}
             <div className="flex items-center justify-between mt-auto">
-              <span className="text-lg font-semibold tabular-nums font-mono text-foreground">€{t.price}</span>
+              <span className="text-lg font-semibold tabular-nums font-mono text-foreground">€{t.price} · {t.priceAll} L</span>
               <span className="text-xs text-muted-foreground">{t.duration} min</span>
             </div>
           </motion.div>
