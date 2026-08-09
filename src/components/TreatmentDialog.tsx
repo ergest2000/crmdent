@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTreatmentStore, type FullTreatment } from "@/stores/treatment-store";
+import { useClinicStore } from "@/stores/clinic-store";
 import { toast } from "@/hooks/use-toast";
 
 interface Props {
@@ -16,6 +17,8 @@ interface Props {
 export function TreatmentDialog({ open, onOpenChange, editTreatment }: Props) {
   const addTreatment = useTreatmentStore((s) => s.addTreatment);
   const updateTreatment = useTreatmentStore((s) => s.updateTreatment);
+  const clinic = useClinicStore((s) => s.clinic);
+  const rate = clinic?.eur_to_all || 100; // 1 € = rate Lekë
 
   const [form, setForm] = useState({
     name: editTreatment?.name || "",
@@ -25,6 +28,13 @@ export function TreatmentDialog({ open, onOpenChange, editTreatment }: Props) {
     duration: editTreatment?.duration || 30,
     description: editTreatment?.description || "",
   });
+
+  // Kur ndryshon € -> llogarit Lekë
+  const setEur = (v: number) =>
+    setForm((f) => ({ ...f, price: v, priceAll: Math.round(v * rate) }));
+  // Kur ndryshon Lekë -> llogarit €
+  const setAll = (v: number) =>
+    setForm((f) => ({ ...f, priceAll: v, price: rate ? Math.round((v / rate) * 100) / 100 : 0 }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,13 +79,14 @@ export function TreatmentDialog({ open, onOpenChange, editTreatment }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Çmimi (€) *</label>
-              <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} required className="h-9 text-sm" />
+              <Input type="number" value={form.price} onChange={(e) => setEur(Number(e.target.value))} required className="h-9 text-sm" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Çmimi (Lekë) *</label>
-              <Input type="number" value={form.priceAll} onChange={(e) => setForm({ ...form, priceAll: Number(e.target.value) })} required className="h-9 text-sm" />
+              <label className="text-xs text-muted-foreground mb-1 block">Çmimi (Lekë)</label>
+              <Input type="number" value={form.priceAll} onChange={(e) => setAll(Number(e.target.value))} className="h-9 text-sm" />
             </div>
           </div>
+          <p className="text-[11px] text-muted-foreground -mt-2">Kursi: 1 € = {rate} Lekë (ndryshohet te Cilësimet). Ndrysho njërin, tjetri llogaritet vetë.</p>
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Kohëzgjatja (min)</label>
             <Input type="number" value={form.duration} onChange={(e) => setForm({ ...form, duration: Number(e.target.value) })} className="h-9 text-sm" />
