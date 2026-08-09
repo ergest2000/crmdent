@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Settings, Clock, CreditCard, Save, Upload, Building2 } from "lucide-react";
+import { Clock, CreditCard, Save, Upload, Building2, Coins } from "lucide-react";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useClinicStore } from "@/stores/clinic-store";
 import { motion } from "framer-motion";
@@ -19,12 +19,17 @@ export default function SettingsPage() {
 
   const [clinicName, setClinicName] = useState("");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [eurToAll, setEurToAll] = useState(100);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { fetchClinic(); }, []);
   useEffect(() => {
-    if (clinic) { setClinicName(clinic.name || ""); setLogoUrl(clinic.logo_url || null); }
+    if (clinic) {
+      setClinicName(clinic.name || "");
+      setLogoUrl(clinic.logo_url || null);
+      setEurToAll(clinic.eur_to_all || 100);
+    }
   }, [clinic]);
 
   const handleLogoPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,7 +43,7 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     updateSettings(form);
-    const ok = await updateClinic({ name: clinicName, logo_url: logoUrl });
+    const ok = await updateClinic({ name: clinicName, logo_url: logoUrl, eur_to_all: Number(eurToAll) });
     setSaving(false);
     toast({ title: ok ? "Cilësimet u ruajtën me sukses" : "Cilësimet u ruajtën (klinika s'u përditësua)" });
   };
@@ -51,7 +56,7 @@ export default function SettingsPage() {
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={clinicalTransition} className="space-y-6">
-        {/* Branding: emri + logo */}
+        {/* Branding: emri + logo + kursi */}
         <div className="rounded-card bg-card shadow-subtle p-5 space-y-4">
           <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
             <Building2 className="h-4 w-4 text-muted-foreground" />Identiteti i klinikës
@@ -73,6 +78,13 @@ export default function SettingsPage() {
           <div>
             <label className="text-xs text-muted-foreground block mb-1.5">Emri i klinikës</label>
             <Input value={clinicName} onChange={(e) => setClinicName(e.target.value)} className="h-9 text-sm" />
+          </div>
+          <div className="max-w-[220px]">
+            <label className="text-xs text-muted-foreground block mb-1.5 flex items-center gap-1.5">
+              <Coins className="h-3.5 w-3.5" />Kursi: 1 € = ? Lekë
+            </label>
+            <Input type="number" value={eurToAll} onChange={(e) => setEurToAll(Number(e.target.value))} className="h-9 text-sm" />
+            <p className="text-[11px] text-muted-foreground mt-1">Përdoret për llogaritjen automatike të çmimeve.</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
