@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/stores/auth-store";
+import { toast } from "@/hooks/use-toast";
 import {
   clinicConfig,
   createInvoiceItem,
@@ -32,7 +34,6 @@ interface InvoiceStore {
   getPatientInvoices: (patientId: string) => FiscalInvoice[];
 }
 
-// Normalizo item-at (pranon edhe formatin e vjeter {treatmentName,...})
 function normalizeItems(raw: any): FiscalInvoiceItem[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((it) =>
@@ -45,7 +46,6 @@ function normalizeItems(raw: any): FiscalInvoiceItem[] {
   );
 }
 
-// Rreshti i DB -> FiscalInvoice
 function rowToInvoice(r: any): FiscalInvoice {
   const items = normalizeItems(r.items);
   const totals = calculateInvoiceTotals(items);
@@ -72,7 +72,6 @@ function rowToInvoice(r: any): FiscalInvoice {
 }
 
 export const useInvoiceStore = create<InvoiceStore>((set, get) => {
-  // Realtime + fetch fillestar kur ka sesion
   supabase
     .channel("invoices-realtime")
     .on("postgres_changes", { event: "*", schema: "public", table: "invoices" }, () => get().fetchInvoices())
@@ -124,10 +123,12 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => {
         notes: data.notes, currency: data.currency, currencySymbol: data.currencySymbol,
       };
 
-      // Optimistik ne UI
+      // Optimistik
       set((s) => ({ invoices: [invoice, ...s.invoices] }));
 
-      // Persist ne DB (clinic_id mbushet nga trigger-i)
+      // clinic_id shprehimisht (nga profili), qe fatura te mos mbetet pa klinike
+      const clinicId = useAuthStore.getState().profile?.clinic_id ?? null;
+
       supabase.from("invoices").insert({
         id,
         invoice_number: invoiceNumber,
@@ -139,8 +140,12 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => {
         paid,
         status,
         notes: data.notes ?? null,
+        ...(clinicId ? { clinic_id: clinicId } : {}),
       }).then(({ error }) => {
-        if (error) console.error("addInvoice persist error:", error.message);
+        if (error) {
+          console.error("addInvoice persist error:", error.message);
+          toast({ title: "Fatura s'u ruajt në bazë", description: error.message, variant: "destructive" });
+        }
       });
 
       return invoice;
@@ -148,7 +153,6 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => {
 
     updateInvoice: (id, data) => {
       set((s) => ({ invoices: s.invoices.map((inv) => (inv.id === id ? { ...inv, ...data } : inv)) }));
-
       const payload: Record<string, any> = {};
       if (data.patientName !== undefined) payload.patient_name = data.patientName;
       if (data.date !== undefined) payload.date = data.date;
@@ -157,7 +161,6 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => {
       if (data.status !== undefined) payload.status = data.status;
       if (data.notes !== undefined) payload.notes = data.notes;
       if (data.items !== undefined) payload.items = data.items;
-
       if (Object.keys(payload).length > 0) {
         supabase.from("invoices").update(payload).eq("id", id).then(({ error }) => {
           if (error) console.error("updateInvoice persist error:", error.message);
