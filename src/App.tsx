@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
+import { useAuthStore } from "@/stores/auth-store";
 import LandingPage from "./landing/LandingPage";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -24,8 +25,19 @@ import LeadsPage from "./pages/Leads";
 import StockPage from "./pages/Stock";
 import Doctors from "./pages/Doctors";
 import NotFound from "./pages/NotFound";
+import SuperAdminDashboard from "./pages/super-admin/SuperAdminDashboard";
+import SuperAdminAnalytics from "./pages/super-admin/SuperAdminAnalytics";
+import SuperAdminUsers from "./pages/super-admin/SuperAdminUsers";
 
 const queryClient = new QueryClient();
+
+// Ne /app: super_admin ridrejtohet te paneli i vet; te tjeret shohin Dashboard-in e klinikes
+function AppIndex() {
+  const initialized = useAuthStore((s) => s.initialized);
+  const isSuperAdmin = useAuthStore((s) => s.isSuperAdmin);
+  if (initialized && isSuperAdmin()) return <Navigate to="/super-admin" replace />;
+  return <Dashboard />;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -36,8 +48,10 @@ const App = () => (
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
+
+          {/* Pjesa e klinikes */}
           <Route path="/app" element={<AppLayout />}>
-            <Route index element={<Dashboard />} />
+            <Route index element={<AppIndex />} />
             <Route path="leads" element={<LeadsPage />} />
             <Route path="patients" element={<Patients />} />
             <Route path="doctors" element={<Doctors />} />
@@ -53,6 +67,14 @@ const App = () => (
             <Route path="staff" element={<Staff />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
+
+          {/* Pjesa e super-admin-it (menaxhim klinikash + usera + statistika) */}
+          <Route path="/super-admin" element={<AppLayout />}>
+            <Route index element={<SuperAdminDashboard />} />
+            <Route path="analytics" element={<SuperAdminAnalytics />} />
+            <Route path="users" element={<SuperAdminUsers />} />
+          </Route>
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
