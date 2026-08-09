@@ -1,40 +1,14 @@
 import { create } from "zustand";
+import { supabase } from "@/integrations/supabase/client";
 import {
   clinicConfig,
   createInvoiceItem,
   calculateInvoiceTotals,
   generateInvoiceNumber,
   type FiscalInvoice,
+  type FiscalInvoiceItem,
   type PaymentMethod,
 } from "@/lib/invoice-utils";
-import { invoices as mockInvoices } from "@/lib/mock-data";
-
-// Convert legacy mock invoices to fiscal format on init
-function mockToFiscal(inv: typeof mockInvoices[0]): FiscalInvoice {
-  const items = inv.items.map((item) =>
-    createInvoiceItem(item.treatmentName, item.quantity, item.unitPrice)
-  );
-  const totals = calculateInvoiceTotals(items);
-  return {
-    id: inv.id,
-    invoiceNumber: inv.id.replace("INV-", `${clinicConfig.invoicePrefix}-2026-`),
-    patientId: inv.patientId,
-    patientName: inv.patientName,
-    date: inv.date,
-    time: "10:00",
-    dueDate: inv.dueDate,
-    items,
-    subtotal: totals.subtotal,
-    vatAmount: totals.vatAmount,
-    total: totals.total,
-    paid: inv.paid * 1.2,
-    status: inv.status,
-    paymentMethod: "cash",
-    dentist: inv.dentist,
-    currency: "EUR",
-    currencySymbol: "€",
-  };
-}
 
 interface NewInvoiceData {
   patientId: string;
@@ -50,65 +24,154 @@ interface NewInvoiceData {
 
 interface InvoiceStore {
   invoices: FiscalInvoice[];
+  loading: boolean;
+  fetchInvoices: () => Promise<void>;
   addInvoice: (data: NewInvoiceData) => FiscalInvoice;
   updateInvoice: (id: string, data: Partial<FiscalInvoice>) => void;
   deleteInvoice: (id: string) => void;
   getPatientInvoices: (patientId: string) => FiscalInvoice[];
 }
 
-export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
-  invoices: mockInvoices.map(mockToFiscal),
+// Normalizo item-at (pranon edhe formatin e vjeter {treatmentName,...})
+function normalizeItems(raw: any): FiscalInvoiceItem[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((it) =>
+    createInvoiceItem(
+      it.description ?? it.treatmentName ?? "",
+      Number(it.quantity) || 0,
+      Number(it.unitPrice) || 0,
+      typeof it.vatRate === "number" ? it.vatRate : clinicConfig.vatRate
+    )
+  );
+}
 
-  addInvoice: (data) => {
-    const invoiceNumber = generateInvoiceNumber();
-    const now = new Date();
-    const date = now.toISOString().split("T")[0];
-    const time = now.toLocaleTimeString("sq-AL", { hour: "2-digit", minute: "2-digit" });
-    const dueDate = new Date(now.getTime() + clinicConfig.paymentTermsDays * 86400000)
-      .toISOString()
-      .split("T")[0];
+// Rreshti i DB -> FiscalInvoice
+function rowToInvoice(r: any): FiscalInvoice {
+  const items = normalizeItems(r.items);
+  const totals = calculateInvoiceTotals(items);
+  return {
+    id: r.id,
+    invoiceNumber: r.invoice_number ?? r.id,
+    patientId: r.patient_id ?? "",
+    patientName: r.patient_name ?? "",
+    date: r.date ?? "",
+    time: "10:00",
+    dueDate: r.date ?? "",
+    items,
+    subtotal: totals.subtotal,
+    vatAmount: totals.vatAmount,
+    total: parseFloat(r.total) || totals.total,
+    paid: parseFloat(r.paid) || 0,
+    status: (r.status ?? "unpaid") as FiscalInvoice["status"],
+    paymentMethod: "cash",
+    dentist: "",
+    notes: r.notes ?? undefined,
+    currency: "EUR",
+    currencySymbol: "€",
+  };
+}
 
-    const items = data.items.map((item) =>
-      createInvoiceItem(item.description, item.quantity, item.unitPrice)
-    );
-    const totals = calculateInvoiceTotals(items);
+export const useInvoiceStore = create<InvoiceStore>((set, get) => {
+  // Realtime + fetch fillestar kur ka sesion
+  supabase
+    .channel("invoices-realtime")
+    .on("postgres_changes", { event: "*", schema: "public", table: "invoices" }, () => get().fetchInvoices())
+    .subscribe();
 
-    const invoice: FiscalInvoice = {
-      id: `INV-${Date.now()}`,
-      invoiceNumber,
-      patientId: data.patientId,
-      patientName: data.patientName,
-      date,
-      time,
-      dueDate,
-      items,
-      subtotal: totals.subtotal,
-      vatAmount: totals.vatAmount,
-      total: totals.total,
-      paid: data.markAsPaid ? totals.total : 0,
-      status: data.markAsPaid ? "paid" : "unpaid",
-      paymentMethod: data.paymentMethod,
-      dentist: data.dentist,
-      notes: data.notes,
-      currency: data.currency,
-      currencySymbol: data.currencySymbol,
-    };
+  supabase.auth.onAuthStateChange((_e, session) => {
+    if (session?.user) setTimeout(() => get().fetchInvoices(), 0);
+  });
 
-    set((state) => ({ invoices: [invoice, ...state.invoices] }));
-    return invoice;
-  },
+  return {
+    invoices: [],
+    loading: false,
 
-  updateInvoice: (id, data) => {
-    set((state) => ({
-      invoices: state.invoices.map((inv) => (inv.id === id ? { ...inv, ...data } : inv)),
-    }));
-  },
+    fetchInvoices: async () => {
+      set({ loading: true });
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("fetchInvoices error:", error.message);
+        set({ loading: false });
+        return;
+      }
+      set({ invoices: (data || []).map(rowToInvoice), loading: false });
+    },
 
-  deleteInvoice: (id) => {
-    set((state) => ({ invoices: state.invoices.filter((inv) => inv.id !== id) }));
-  },
+    addInvoice: (data) => {
+      const invoiceNumber = generateInvoiceNumber();
+      const now = new Date();
+      const date = now.toISOString().split("T")[0];
+      const time = now.toLocaleTimeString("sq-AL", { hour: "2-digit", minute: "2-digit" });
+      const dueDate = new Date(now.getTime() + clinicConfig.paymentTermsDays * 86400000)
+        .toISOString().split("T")[0];
 
-  getPatientInvoices: (patientId) => {
-    return get().invoices.filter((inv) => inv.patientId === patientId);
-  },
-}));
+      const items = data.items.map((it) =>
+        createInvoiceItem(it.description, it.quantity, it.unitPrice)
+      );
+      const totals = calculateInvoiceTotals(items);
+      const id = `INV-${Date.now()}`;
+      const paid = data.markAsPaid ? totals.total : 0;
+      const status: FiscalInvoice["status"] = data.markAsPaid ? "paid" : "unpaid";
+
+      const invoice: FiscalInvoice = {
+        id, invoiceNumber, patientId: data.patientId, patientName: data.patientName,
+        date, time, dueDate, items,
+        subtotal: totals.subtotal, vatAmount: totals.vatAmount, total: totals.total,
+        paid, status, paymentMethod: data.paymentMethod, dentist: data.dentist,
+        notes: data.notes, currency: data.currency, currencySymbol: data.currencySymbol,
+      };
+
+      // Optimistik ne UI
+      set((s) => ({ invoices: [invoice, ...s.invoices] }));
+
+      // Persist ne DB (clinic_id mbushet nga trigger-i)
+      supabase.from("invoices").insert({
+        id,
+        invoice_number: invoiceNumber,
+        patient_id: data.patientId,
+        patient_name: data.patientName,
+        date,
+        items,
+        total: totals.total,
+        paid,
+        status,
+        notes: data.notes ?? null,
+      }).then(({ error }) => {
+        if (error) console.error("addInvoice persist error:", error.message);
+      });
+
+      return invoice;
+    },
+
+    updateInvoice: (id, data) => {
+      set((s) => ({ invoices: s.invoices.map((inv) => (inv.id === id ? { ...inv, ...data } : inv)) }));
+
+      const payload: Record<string, any> = {};
+      if (data.patientName !== undefined) payload.patient_name = data.patientName;
+      if (data.date !== undefined) payload.date = data.date;
+      if (data.total !== undefined) payload.total = data.total;
+      if (data.paid !== undefined) payload.paid = data.paid;
+      if (data.status !== undefined) payload.status = data.status;
+      if (data.notes !== undefined) payload.notes = data.notes;
+      if (data.items !== undefined) payload.items = data.items;
+
+      if (Object.keys(payload).length > 0) {
+        supabase.from("invoices").update(payload).eq("id", id).then(({ error }) => {
+          if (error) console.error("updateInvoice persist error:", error.message);
+        });
+      }
+    },
+
+    deleteInvoice: (id) => {
+      set((s) => ({ invoices: s.invoices.filter((inv) => inv.id !== id) }));
+      supabase.from("invoices").delete().eq("id", id).then(({ error }) => {
+        if (error) console.error("deleteInvoice error:", error.message);
+      });
+    },
+
+    getPatientInvoices: (patientId) => get().invoices.filter((inv) => inv.patientId === patientId),
+  };
+});
