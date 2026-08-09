@@ -1,10 +1,13 @@
 import { clinicConfig, type FiscalInvoice, formatDateAL, paymentMethodLabelsAL, numberToWordsAL } from "@/lib/invoice-utils";
+import { useClinicStore } from "@/stores/clinic-store";
 
 interface InvoicePreviewProps {
   invoice: FiscalInvoice;
 }
 
 export function InvoicePreview({ invoice }: InvoicePreviewProps) {
+  const clinic = useClinicStore((s) => s.clinic);
+  const clinicName = clinic?.name || clinicConfig.name;
   const sym = invoice.currencySymbol || clinicConfig.currencySymbol;
   const cur = invoice.currency || clinicConfig.currency;
 
@@ -14,11 +17,11 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
       <div className="flex justify-between items-start border-b-2 border-primary pb-4 mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white text-lg font-bold">
-              D
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white text-lg font-bold overflow-hidden">
+              {clinic?.logo_url ? <img src={clinic.logo_url} alt="logo" className="h-full w-full object-cover" /> : (clinicName[0]?.toUpperCase() || "D")}
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">{clinicConfig.name}</h1>
+              <h1 className="text-lg font-bold text-gray-900">{clinicName}</h1>
               <p className="text-xs text-gray-500">Klinikë Dentare</p>
             </div>
           </div>
@@ -131,7 +134,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">Të dhëna bankare</h3>
           <p>Banka: <span className="font-medium text-gray-900">{clinicConfig.bankName}</span></p>
           <p>IBAN: <span className="font-mono font-medium text-gray-900">{clinicConfig.iban}</span></p>
-          <p>Përfituesi: <span className="font-medium text-gray-900">{clinicConfig.name}</span></p>
+          <p>Përfituesi: <span className="font-medium text-gray-900">{clinicName}</span></p>
         </div>
       </div>
 
@@ -145,7 +148,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
       {/* Footer */}
       <div className="border-t border-gray-200 pt-3 text-[11px] text-gray-400 text-center space-y-0.5">
         <p>Faleminderit për besimin tuaj! | Shëndet të mirë!</p>
-        <p>{clinicConfig.name} | NIPT: {clinicConfig.nipt} | {clinicConfig.address}</p>
+        <p>{clinicName} | NIPT: {clinicConfig.nipt} | {clinicConfig.address}</p>
         <p className="text-[10px]">Kjo faturë është gjeneruar automatikisht nga sistemi DenteOS CRM</p>
       </div>
     </div>
