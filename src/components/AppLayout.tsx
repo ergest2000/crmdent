@@ -14,6 +14,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const initialized = useAuthStore((s) => s.initialized);
+  const initialize = useAuthStore((s) => s.initialize);
 
   const fetchDoctors = useDoctorStore((s) => s.fetchDoctors);
   const fetchPatients = usePatientStore((s) => s.fetchPatients);
@@ -22,14 +23,18 @@ export function AppLayout() {
   const fetchAppointments = useAppointmentStore((s) => s.fetchAppointments);
   const fetchProducts = useProductStore((s) => s.fetchProducts);
 
-  // Redirect to login when user logs out
+  // Inicializo auth-in nje here: ngarkon profilin/rolin dhe regjistron onAuthStateChange.
+  // (Pa kete, profili/roli s'lexohej kurre ne store.)
   useEffect(() => {
-    if (initialized && !user) {
-      navigate("/login");
-    }
+    if (!initialized) initialize();
+  }, [initialized]);
+
+  // Guard: ridrejto te /login kur s'ka sesion
+  useEffect(() => {
+    if (initialized && !user) navigate("/login");
   }, [user, initialized]);
 
-  // Fetch all data on mount
+  // Fetch te dhenat ne mount (RLS i izolon sipas kliniks)
   useEffect(() => {
     fetchDoctors();
     fetchPatients();
@@ -38,6 +43,15 @@ export function AppLayout() {
     fetchAppointments();
     fetchProducts();
   }, []);
+
+  // Prit sa te inicializohet auth-i (shmang flash-in)
+  if (!initialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="h-6 w-6 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
