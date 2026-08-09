@@ -4,7 +4,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { Lock, Mail, Eye, EyeOff } from "lucide-react";
+import { Lock, User, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -17,7 +17,9 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const { error } = await login(email, password);
+    // Username -> email i brendshem (nese s'ka "@")
+    const loginId = email.includes("@") ? email.trim() : `${email.trim().toLowerCase()}@crmdent.local`;
+    const { error } = await login(loginId, password);
     setIsLoading(false);
     if (error) {
       toast({ title: "Gabim", description: error, variant: "destructive" });
@@ -37,10 +39,10 @@ export default function Login() {
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Email</label>
+              <label className="text-xs text-muted-foreground mb-1 block">Username ose email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="email@shembull.com" className="pl-10 h-10" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input type="text" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="username ose email" className="pl-10 h-10" />
               </div>
             </div>
             <div>
