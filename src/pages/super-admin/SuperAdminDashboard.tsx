@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Plus, Building2, Users, CreditCard, Edit, Trash2, UserPlus, Eye, Activity, TrendingUp, ArrowUpRight } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
 import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,7 +32,7 @@ export default function SuperAdminDashboard() {
   const [recentProfiles, setRecentProfiles] = useState<any[]>([]);
 
   const [clinicForm, setClinicForm] = useState({ name: "", address: "", phone: "", email: "", plan_id: "" });
-  const [userForm, setUserForm] = useState({ email: "", password: "", full_name: "", role: "clinic_admin", clinic_id: "" });
+  const [userForm, setUserForm] = useState({ username: "", password: "", full_name: "", role: "clinic_admin", clinic_id: "" });
 
   useEffect(() => {
     fetchClinics();
@@ -39,18 +40,13 @@ export default function SuperAdminDashboard() {
   }, []);
 
   const fetchGlobalStats = async () => {
-    // Fetch all profiles (users across all clinics)
     const { data: profiles } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
     if (profiles) {
       setTotalUsers(profiles.length);
       setRecentProfiles(profiles.slice(0, 8));
     }
-
-    // Fetch all leads count
     const { count: leadCount } = await supabase.from("leads").select("*", { count: "exact", head: true });
     setTotalLeads(leadCount || 0);
-
-    // Fetch all products count as proxy for patient activity
     const { count: productCount } = await supabase.from("products").select("*", { count: "exact", head: true });
     setTotalPatients(productCount || 0);
   };
@@ -72,14 +68,22 @@ export default function SuperAdminDashboard() {
   };
 
   const handleCreateUser = async () => {
-    if (!userForm.email || !userForm.password || !userForm.clinic_id) return;
-    const { error } = await supabase.auth.signUp({
-      email: userForm.email,
+    if (!userForm.username || !userForm.password || !userForm.clinic_id) return;
+    const uname = userForm.username.trim().toLowerCase();
+    const email = uname.includes("@") ? uname : `${uname}@crmdent.local`;
+    // Klient i perkohshem: NUK e prek sesionin e super-admin-it
+    const tmp = createClient(
+      "https://bqzdddsgmnshinckgtrq.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxemRkZHNnbW5zaGluY2tndHJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMTU2NDMsImV4cCI6MjA4OTc5MTY0M30.Y1WYj8h7EavKiJyHxkCAPk8BTd0eZuLTS8BbnmBi9lQ",
+      { auth: { persistSession: false, autoRefreshToken: false } }
+    );
+    const { error } = await tmp.auth.signUp({
+      email,
       password: userForm.password,
-      options: { data: { full_name: userForm.full_name, role: userForm.role, clinic_id: userForm.clinic_id } },
+      options: { data: { full_name: userForm.full_name, role: userForm.role, clinic_id: userForm.clinic_id, username: uname } },
     });
     if (error) { toast({ title: "Gabim", description: error.message, variant: "destructive" }); }
-    else { toast({ title: "Përdoruesi u krijua!" }); setUserDialogOpen(false); setUserForm({ email: "", password: "", full_name: "", role: "clinic_admin", clinic_id: "" }); fetchGlobalStats(); }
+    else { toast({ title: "Përdoruesi u krijua!" }); setUserDialogOpen(false); setUserForm({ username: "", password: "", full_name: "", role: "clinic_admin", clinic_id: "" }); fetchGlobalStats(); }
   };
 
   const viewUsers = async (clinicId: string) => {
@@ -95,13 +99,11 @@ export default function SuperAdminDashboard() {
 
   return (
     <div className="p-5 space-y-5 max-w-[1400px]">
-      {/* Header */}
       <div>
         <h2 className="text-base font-semibold text-foreground">{greeting}, {profile?.full_name || "Super Admin"}!</h2>
         <p className="text-sm text-muted-foreground">Paneli global — menaxho të gjitha klinikat dhe aktivitetin</p>
       </div>
 
-      {/* Global Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ ...clinicalTransition, delay: 0 }} className="rounded-card bg-card shadow-subtle p-4">
           <div className="flex items-center gap-2 text-muted-foreground mb-2"><Building2 className="h-4 w-4" /><span className="text-xs">Klinika Totale</span></div>
@@ -125,7 +127,6 @@ export default function SuperAdminDashboard() {
         </motion.div>
       </div>
 
-      {/* Plans Section */}
       <div>
         <h2 className="text-sm font-semibold mb-3">Planet</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -144,7 +145,6 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
 
-      {/* Clinics Table */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold">Klinikat ({clinics.length})</h2>
@@ -192,7 +192,6 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
 
-      {/* Recent Users */}
       <div>
         <h2 className="text-sm font-semibold mb-3">Përdoruesit e Fundit</h2>
         <div className="rounded-card bg-card shadow-subtle overflow-hidden">
@@ -203,11 +202,11 @@ export default function SuperAdminDashboard() {
               recentProfiles.map((u) => (
                 <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors">
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
-                    {u.full_name?.[0] || u.email?.[0] || "?"}
+                    {u.full_name?.[0] || u.username?.[0] || u.email?.[0] || "?"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{u.full_name || "Pa emër"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                    <p className="text-xs text-muted-foreground truncate">{u.username || u.email}</p>
                   </div>
                   <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded capitalize">{u.role}</span>
                   <span className="text-[10px] text-muted-foreground">{u.clinic_id ? "Klinikë" : "Global"}</span>
@@ -218,7 +217,6 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
 
-      {/* Create Clinic Dialog */}
       <Dialog open={clinicDialogOpen} onOpenChange={setClinicDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Shto Klinikë të Re</DialogTitle></DialogHeader>
@@ -244,13 +242,12 @@ export default function SuperAdminDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Create User Dialog */}
       <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Shto Përdorues të Ri</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><label className="text-xs text-muted-foreground mb-1 block">Emri i plotë *</label><Input value={userForm.full_name} onChange={(e) => setUserForm({ ...userForm, full_name: e.target.value })} className="h-9 text-sm" /></div>
-            <div><label className="text-xs text-muted-foreground mb-1 block">Email *</label><Input type="email" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} className="h-9 text-sm" /></div>
+            <div><label className="text-xs text-muted-foreground mb-1 block">Username *</label><Input value={userForm.username} onChange={(e) => setUserForm({ ...userForm, username: e.target.value })} placeholder="p.sh. klinika1" className="h-9 text-sm" /></div>
             <div><label className="text-xs text-muted-foreground mb-1 block">Fjalëkalimi *</label><Input type="password" value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} className="h-9 text-sm" /></div>
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Klinika *</label>
@@ -281,7 +278,6 @@ export default function SuperAdminDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* View Users Dialog */}
       <Dialog open={!!viewUsersClinic} onOpenChange={() => setViewUsersClinic(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Përdoruesit e Klinikës</DialogTitle></DialogHeader>
@@ -291,10 +287,10 @@ export default function SuperAdminDashboard() {
             ) : (
               clinicUsers.map((u) => (
                 <div key={u.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">{u.full_name?.[0] || u.email?.[0] || "?"}</div>
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">{u.full_name?.[0] || u.username?.[0] || u.email?.[0] || "?"}</div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{u.full_name || "Pa emër"}</p>
-                    <p className="text-xs text-muted-foreground">{u.email}</p>
+                    <p className="text-xs text-muted-foreground">{u.username || u.email}</p>
                   </div>
                   <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded capitalize">{u.role}</span>
                 </div>
