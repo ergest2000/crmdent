@@ -86,10 +86,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } else {
       set({ initialized: true });
     }
-    supabase.auth.onAuthStateChange(async (_event, session) => {
+
+    // KUJDES: mos bej thirrje async DIREKT brenda onAuthStateChange (bllokohet supabase-js).
+    // E shtyjme me setTimeout(…, 0).
+    supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         set({ user: session.user, session });
-        await get().fetchProfile();
+        setTimeout(() => { get().fetchProfile(); }, 0);
       } else {
         set({ user: null, session: null, profile: null });
       }
@@ -114,8 +117,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   logout: async () => {
-    await supabase.auth.signOut();
+    try { await supabase.auth.signOut(); } catch (e) { /* injoro */ }
+    try {
+      Object.keys(localStorage).filter((k) => k.startsWith("sb-")).forEach((k) => localStorage.removeItem(k));
+    } catch (e) { /* injoro */ }
     set({ user: null, session: null, profile: null, clinics: [], plans: [] });
+    window.location.href = "/login";
   },
 
   resetPassword: async (email) => {
@@ -128,7 +135,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   fetchProfile: async () => {
     const user = get().user;
     if (!user) return;
-    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+    const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    if (error) console.error("[auth] fetchProfile:", error.message);
     if (data) set({ profile: data as Profile });
   },
 
