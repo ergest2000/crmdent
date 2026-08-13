@@ -4,28 +4,71 @@ import { useAuthStore } from "@/stores/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { Lock, User, Eye, EyeOff } from "lucide-react";
+import { Lock, User, Eye, EyeOff, Sparkles, Loader2 } from "lucide-react";
+import {
+  DEMO_EMAIL,
+  DEMO_PASSWORD,
+  isDemoEmail,
+  provisionDemo,
+  ensureDemoReady,
+} from "@/lib/demo";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
+
+  // Butoni "Fill demo credentials": mbush fushat dhe siguron demo user-in në sfond.
+  const handleFillDemo = async () => {
+    setEmail(DEMO_EMAIL);
+    setPassword(DEMO_PASSWORD);
+    setDemoBusy(true);
+    try {
+      const r = await provisionDemo();
+      if (!r.ok) {
+        toast({
+          title: "Kujdes",
+          description: "Demo po përgatitet ende. Nëse hyrja dështon, kliko sërish pas pak sekondash.",
+        });
+      }
+    } finally {
+      setDemoBusy(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     // Username -> email i brendshem (nese s'ka "@")
     const loginId = email.includes("@") ? email.trim() : `${email.trim().toLowerCase()}@crmdent.local`;
-    const { error } = await login(loginId, password);
-    setIsLoading(false);
-    if (error) {
-      toast({ title: "Gabim", description: error, variant: "destructive" });
-    } else {
-      navigate("/app");
+
+    let { error } = await login(loginId, password);
+
+    // Nese eshte demo dhe hyrja deshton, sigurohu qe demo user ekziston dhe riprovo
+    if (error && isDemoEmail(loginId)) {
+      await provisionDemo();
+      ({ error } = await login(loginId, password));
     }
+
+    if (error) {
+      setIsLoading(false);
+      toast({ title: "Gabim", description: error, variant: "destructive" });
+      return;
+    }
+
+    // Per demo: rikthe klinikën në gjendjen fillestare (të dhëna të plota, jo bosh)
+    if (isDemoEmail(loginId)) {
+      setPreparing(true);
+      await ensureDemoReady();
+    }
+
+    setIsLoading(false);
+    navigate("/app");
   };
 
   return (
@@ -59,9 +102,33 @@ export default function Login() {
               <Link to="/forgot-password" className="text-xs text-primary hover:underline">Keni harruar fjalëkalimin?</Link>
             </div>
             <Button type="submit" className="w-full h-10" disabled={isLoading}>
-              {isLoading ? "Duke hyrë..." : "Hyr"}
+              {preparing ? "Po përgatitet demo..." : isLoading ? "Duke hyrë..." : "Hyr"}
             </Button>
           </form>
+
+          {/* --- DEMO --- */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border/50" />
+            </div>
+            <div className="relative flex justify-center text-[11px]">
+              <span className="bg-white px-2 text-muted-foreground uppercase tracking-wider">ose</span>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-10 gap-2"
+            onClick={handleFillDemo}
+            disabled={demoBusy || isLoading}
+          >
+            {demoBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            Fill demo credentials
+          </Button>
+          <p className="text-center text-[11px] text-muted-foreground -mt-2">
+            demo@dentalcrm.com · demo123 — pastaj kliko <span className="font-medium">Hyr</span>
+          </p>
+
           <div className="text-center text-sm text-muted-foreground">
             Nuk keni llogari?{" "}
             <Link to="/register" className="text-primary font-medium hover:underline">Regjistrohu</Link>
