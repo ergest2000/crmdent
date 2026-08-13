@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.verify-integration]
 verify_jwt = false
+
+[functions.demo-provision]
+verify_jwt = false
