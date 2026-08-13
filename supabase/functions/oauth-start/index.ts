@@ -1,3 +1,16 @@
+// ============================================================================
+//  demo-provision  (verify_jwt = false)
+// ----------------------------------------------------------------------------
+//  Siguron (idempotent) infrastrukturën e demo-s:
+//    - klinikën demo (id fikse)
+//    - demo user-in te auth.users (email demo@dentalcrm.com / pass demo123)
+//    - profilin (role: clinic_admin, i lidhur me klinikën demo)
+//
+//  NUK mbush të dhëna domain — ato mbushen nga klienti si demo user
+//  (src/lib/demo.ts -> resetDemoData), që RLS + `default auth.uid()` të plotësohen
+//  saktë. Kthen { ok, userId }.
+// ============================================================================
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -7,138 +20,106 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const DEMO_EMAIL = "demo@dentalcrm.com";
+const DEMO_PASSWORD = "demo123";
+const DEMO_CLINIC_ID = "de300000-0000-4000-8000-0000000000c1";
+const DEMO_CLINIC_NAME = "Klinika Dentare Demo";
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { platform, redirect_uri } = await req.json();
-
-    if (!platform) {
-      return new Response(
-        JSON.stringify({ error: "Missing platform" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Generate a random state for CSRF protection
-    const state = crypto.randomUUID();
-    
-    // Store state in a temporary way (we'll verify it on callback)
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const admin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
-    // Build the callback URL
-    const callbackUrl = `${supabaseUrl}/functions/v1/oauth-callback`;
+    // 1) Klinika demo (upsert) -------------------------------------------------
+    const { error: clinicErr } = await admin
+      .from("clinics")
+      .upsert(
+        { id: DEMO_CLINIC_ID, name: DEMO_CLINIC_NAME, is_active: true },
+        { onConflict: "id" },
+      );
+    if (clinicErr) console.error("[demo-provision] clinic:", clinicErr.message);
 
-    let authUrl = "";
+    // 2) Demo user te auth.users ----------------------------------------------
+    let userId: string | null = null;
 
-    switch (platform) {
-      case "google_calendar": {
-        const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
-        if (!clientId) {
-          return new Response(
-            JSON.stringify({ error: "Google OAuth nuk është konfiguruar. Kontaktoni administratorin." }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        const scopes = [
-          "https://www.googleapis.com/auth/calendar",
-          "https://www.googleapis.com/auth/calendar.events",
-          "https://www.googleapis.com/auth/userinfo.email",
-          "https://www.googleapis.com/auth/userinfo.profile",
-        ].join(" ");
+    const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      email: DEMO_EMAIL,
+      password: DEMO_PASSWORD,
+      email_confirm: true,
+      user_metadata: {
+        full_name: DEMO_CLINIC_NAME,
+        role: "clinic_admin",
+        clinic_id: DEMO_CLINIC_ID,
+      },
+    });
 
-        authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-          `client_id=${encodeURIComponent(clientId)}` +
-          `&redirect_uri=${encodeURIComponent(callbackUrl)}` +
-          `&response_type=code` +
-          `&scope=${encodeURIComponent(scopes)}` +
-          `&state=${state}:google_calendar` +
-          `&access_type=offline` +
-          `&prompt=consent`;
-        break;
+    if (created?.user) {
+      userId = created.user.id;
+    } else {
+      // Ekziston tashmë -> gjeje dhe rivendos password-in te demo123
+      if (createErr && !/already|exist|registered/i.test(createErr.message)) {
+        console.error("[demo-provision] createUser:", createErr.message);
       }
-
-      case "email": {
-        // Gmail OAuth
-        const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
-        if (!clientId) {
-          return new Response(
-            JSON.stringify({ error: "Google OAuth nuk është konfiguruar. Kontaktoni administratorin." }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+      // Kërko user-in me email (paginim i thjeshtë)
+      for (let page = 1; page <= 10 && !userId; page++) {
+        const { data: list, error: listErr } = await admin.auth.admin.listUsers({
+          page,
+          perPage: 200,
+        });
+        if (listErr) {
+          console.error("[demo-provision] listUsers:", listErr.message);
+          break;
         }
-        const scopes = [
-          "https://www.googleapis.com/auth/gmail.send",
-          "https://www.googleapis.com/auth/gmail.readonly",
-          "https://www.googleapis.com/auth/userinfo.email",
-          "https://www.googleapis.com/auth/userinfo.profile",
-        ].join(" ");
-
-        authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-          `client_id=${encodeURIComponent(clientId)}` +
-          `&redirect_uri=${encodeURIComponent(callbackUrl)}` +
-          `&response_type=code` +
-          `&scope=${encodeURIComponent(scopes)}` +
-          `&state=${state}:email` +
-          `&access_type=offline` +
-          `&prompt=consent`;
-        break;
-      }
-
-      case "facebook":
-      case "instagram":
-      case "whatsapp": {
-        const appId = Deno.env.get("META_APP_ID");
-        if (!appId) {
-          return new Response(
-            JSON.stringify({ error: "Meta OAuth nuk është konfiguruar. Kontaktoni administratorin." }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        let scopes: string[];
-        if (platform === "whatsapp") {
-          scopes = ["whatsapp_business_management", "whatsapp_business_messaging", "business_management"];
-        } else if (platform === "instagram") {
-          scopes = ["instagram_basic", "instagram_manage_messages", "pages_manage_metadata", "pages_messaging"];
-        } else {
-          scopes = ["pages_messaging", "pages_manage_metadata", "pages_read_engagement"];
-        }
-
-        authUrl = `https://www.facebook.com/v19.0/dialog/oauth?` +
-          `client_id=${encodeURIComponent(appId)}` +
-          `&redirect_uri=${encodeURIComponent(callbackUrl)}` +
-          `&response_type=code` +
-          `&scope=${encodeURIComponent(scopes.join(","))}` +
-          `&state=${state}:${platform}`;
-        break;
-      }
-
-      default:
-        return new Response(
-          JSON.stringify({ error: `Platformë e panjohur: ${platform}` }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        const found = list?.users?.find(
+          (u) => (u.email || "").toLowerCase() === DEMO_EMAIL,
         );
+        if (found) userId = found.id;
+        if (!list || list.users.length < 200) break;
+      }
+      if (userId) {
+        await admin.auth.admin.updateUserById(userId, {
+          password: DEMO_PASSWORD,
+          email_confirm: true,
+          user_metadata: {
+            full_name: DEMO_CLINIC_NAME,
+            role: "clinic_admin",
+            clinic_id: DEMO_CLINIC_ID,
+          },
+        });
+      }
     }
 
-    // Store state temporarily in integrations config for verification
-    await supabase.from("integrations").update({
-      config: { oauth_state: state, oauth_started: new Date().toISOString() }
-    }).eq("platform", platform);
+    if (!userId) return json({ error: "Nuk u krijua/gjet demo user." }, 500);
 
-    return new Response(
-      JSON.stringify({ auth_url: authUrl, state }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    // 3) Profili (upsert) ------------------------------------------------------
+    const { error: profErr } = await admin.from("profiles").upsert(
+      {
+        id: userId,
+        email: DEMO_EMAIL,
+        full_name: DEMO_CLINIC_NAME,
+        role: "clinic_admin",
+        clinic_id: DEMO_CLINIC_ID,
+        clinic_name: DEMO_CLINIC_NAME,
+      },
+      { onConflict: "id" },
     );
-  } catch (error) {
-    console.error("OAuth start error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message || "Gabim i papritur" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    if (profErr) console.error("[demo-provision] profile:", profErr.message);
+
+    return json({ ok: true, userId });
+  } catch (e) {
+    console.error("[demo-provision] fatal:", (e as Error).message);
+    return json({ error: (e as Error).message }, 500);
   }
 });
