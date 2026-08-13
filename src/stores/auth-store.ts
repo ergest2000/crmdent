@@ -63,7 +63,11 @@ interface AuthStore {
   hasPermission: (page: string) => boolean;
   isSuperAdmin: () => boolean;
   isClinicAdmin: () => boolean;
+  isDemo: () => boolean;
 }
+
+// Email-i i llogarisë demo (mbajeni të njëjtë me src/lib/demo.ts).
+const DEMO_EMAIL = "demo@dentalcrm.com";
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
@@ -159,4 +163,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   isSuperAdmin: () => get().profile?.role === "super_admin",
   isClinicAdmin: () => get().profile?.role === "clinic_admin",
+  isDemo: () => {
+    const email = get().profile?.email || get().user?.email || "";
+    return email.trim().toLowerCase() === DEMO_EMAIL;
+  },
 }));
