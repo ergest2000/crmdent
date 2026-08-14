@@ -18,6 +18,13 @@ export type InvoiceStatus = "paid" | "partial" | "unpaid" | "overdue";
 export type PaymentMethod = "cash" | "card" | "bank" | "pos";
 export type InvoiceCurrency = "EUR" | "ALL";
 
+// Lloji i faturës — i ndarë: Pagesa mujore vs Shërbim mujor
+export type InvoiceType = "payment" | "service";
+export const invoiceTypeLabelsAL: Record<InvoiceType, string> = {
+  payment: "Pagesa mujore",
+  service: "Shërbim mujor",
+};
+
 export interface FiscalInvoice {
   id: string;
   invoiceNumber: string; // FT-2026-00001
@@ -39,6 +46,7 @@ export interface FiscalInvoice {
   notes?: string;
   currency: InvoiceCurrency;
   currencySymbol: string;
+  invoiceType?: InvoiceType;
 }
 
 export interface FiscalInvoiceItem {
