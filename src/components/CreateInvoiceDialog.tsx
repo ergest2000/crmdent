@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Receipt } from "lucide-react";
 import { patients, treatments, staffMembers } from "@/lib/mock-data";
-import { clinicConfig, createInvoiceItem, calculateInvoiceTotals, type PaymentMethod, type FiscalInvoice, type InvoiceCurrency, paymentMethodLabelsAL, currencyOptions } from "@/lib/invoice-utils";
+import { clinicConfig, createInvoiceItem, calculateInvoiceTotals, type PaymentMethod, type FiscalInvoice, type InvoiceCurrency, type InvoiceType, paymentMethodLabelsAL, invoiceTypeLabelsAL, currencyOptions } from "@/lib/invoice-utils";
 import { useInvoiceStore } from "@/stores/invoice-store";
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,7 @@ export function CreateInvoiceDialog({
   const [patientId, setPatientId] = useState(preselectedPatientId || "");
   const [dentist, setDentist] = useState(preselectedDentist || "");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
+  const [invoiceType, setInvoiceType] = useState<InvoiceType>(editInvoice?.invoiceType || "service");
   const [currency, setCurrency] = useState<InvoiceCurrency>(editInvoice?.currency || "EUR");
   const [markAsPaid, setMarkAsPaid] = useState(false);
   const [notes, setNotes] = useState("");
@@ -73,6 +74,7 @@ export function CreateInvoiceDialog({
       setPatientId(editInvoice.patientId);
       setDentist(editInvoice.dentist);
       setPaymentMethod(editInvoice.paymentMethod);
+      setInvoiceType(editInvoice.invoiceType || "service");
       setCurrency(editInvoice.currency || "EUR");
       setMarkAsPaid(editInvoice.status === "paid");
       setNotes(editInvoice.notes || "");
@@ -86,6 +88,7 @@ export function CreateInvoiceDialog({
       setPatientId(preselectedPatientId || "");
       setDentist(preselectedDentist || "");
       setPaymentMethod("cash");
+      setInvoiceType("service");
       setCurrency("EUR");
       setMarkAsPaid(false);
       setNotes("");
@@ -147,6 +150,7 @@ export function CreateInvoiceDialog({
       paymentMethod,
       currency,
       currencySymbol: selectedCurrency.symbol,
+      invoiceType,
       items: lineItems.map((li) => ({
         description: li.description,
         quantity: li.quantity,
@@ -169,6 +173,7 @@ export function CreateInvoiceDialog({
         paymentMethod,
         currency,
         currencySymbol: selectedCurrency.symbol,
+        invoiceType,
         items,
         subtotal: totals.subtotal,
         vatAmount: totals.vatAmount,
@@ -235,6 +240,21 @@ export function CreateInvoiceDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Lloji i faturës */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground block mb-1.5">Lloji i faturës *</label>
+            <Select value={invoiceType} onValueChange={(v) => setInvoiceType(v as InvoiceType)}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.entries(invoiceTypeLabelsAL) as [InvoiceType, string][]).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Line Items */}
