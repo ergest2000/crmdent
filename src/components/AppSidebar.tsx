@@ -1,8 +1,9 @@
 import {
-  LayoutDashboard, Users, Calendar, Smile, Receipt, Wallet, BarChart3,
-  UserCog, Settings, Shield, UserPlus, Package, Syringe, LogOut,
+  LayoutDashboard, Users, Calendar, Receipt, Wallet, BarChart3,
+  UserCog, Settings, Shield, UserPlus, Package, LogOut,
   Activity, Globe,
 } from "lucide-react";
+import { Tooth, Dentist } from "@/components/icons/DentalIcons";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth-store";
@@ -16,9 +17,9 @@ const clinicNavItems = {
   dashboard: { title: "Paneli", url: "/app", icon: LayoutDashboard },
   leads: { title: "Leads", url: "/app/leads", icon: UserPlus },
   patients: { title: "Pacientët", url: "/app/patients", icon: Users },
-  doctors: { title: "Dentistë", url: "/app/doctors", icon: Smile },
+  doctors: { title: "Dentistë", url: "/app/doctors", icon: Dentist },
   appointments: { title: "Kalendari i Takimeve", url: "/app/appointments", icon: Calendar },
-  treatments: { title: "Trajtimet", url: "/app/treatments", icon: Syringe },
+  treatments: { title: "Trajtimet", url: "/app/treatments", icon: Tooth },
   finance: { title: "Financa", url: "/app/finance", icon: Wallet },
   invoices: { title: "Faturat", url: "/app/invoices", icon: Receipt },
   stock: { title: "Stoku i Produkteve", url: "/app/stock", icon: Package },
