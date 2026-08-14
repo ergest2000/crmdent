@@ -1,4 +1,4 @@
-import { clinicConfig, type FiscalInvoice, formatDateAL, paymentMethodLabelsAL, invoiceTypeLabelsAL, numberToWordsAL } from "@/lib/invoice-utils";
+import { clinicConfig, type FiscalInvoice, formatDateAL, paymentMethodLabelsAL, numberToWordsAL } from "@/lib/invoice-utils";
 import { useClinicStore } from "@/stores/clinic-store";
 
 interface InvoicePreviewProps {
@@ -57,7 +57,6 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">Detaje</h3>
           <p className="text-xs text-gray-600">Dentist: <span className="font-medium text-gray-900">{invoice.dentist}</span></p>
           <p className="text-xs text-gray-600">Pagesa: <span className="font-medium text-gray-900">{paymentMethodLabelsAL[invoice.paymentMethod]}</span></p>
-          <p className="text-xs text-gray-600">Lloji: <span className="font-medium text-gray-900">{invoiceTypeLabelsAL[invoice.invoiceType || "service"]}</span></p>
           <p className="text-xs text-gray-600">Monedha: <span className="font-medium text-gray-900">{cur}</span></p>
           <p className="text-xs text-gray-600">
             Statusi:{" "}
