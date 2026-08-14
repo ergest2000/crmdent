@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Search, Plus, Download, Eye, ChevronDown, Printer, Pencil, Trash2 } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { exportPDF, exportCSV } from "@/lib/export-utils";
-import { clinicConfig, invoiceTypeLabelsAL } from "@/lib/invoice-utils";
+import { clinicConfig } from "@/lib/invoice-utils";
 import { downloadInvoicePDF, generateInvoicePDF } from "@/lib/invoice-pdf";
 import { useInvoiceStore } from "@/stores/invoice-store";
 import { InvoicePreview } from "@/components/InvoicePreview";
@@ -18,11 +18,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import type { FiscalInvoice, InvoiceType } from "@/lib/invoice-utils";
+import type { FiscalInvoice } from "@/lib/invoice-utils";
 
 export default function Invoices() {
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | InvoiceType>("all");
   const [expandedInvoice, setExpandedInvoice] = useState<string | null>(null);
   const [previewInvoice, setPreviewInvoice] = useState<FiscalInvoice | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -31,20 +30,15 @@ export default function Invoices() {
   const fiscalInvoices = useInvoiceStore((s) => s.invoices);
   const deleteInvoice = useInvoiceStore((s) => s.deleteInvoice);
 
-  const invType = (inv: FiscalInvoice): InvoiceType => inv.invoiceType || "service";
-
   const filtered = fiscalInvoices.filter((inv) => {
     const q = search.toLowerCase();
-    const matchesSearch =
+    return (
       inv.patientName.toLowerCase().includes(q) ||
-      inv.invoiceNumber.toLowerCase().includes(q);
-    const matchesType = typeFilter === "all" || invType(inv) === typeFilter;
-    return matchesSearch && matchesType;
+      inv.invoiceNumber.toLowerCase().includes(q)
+    );
   });
 
   const totalFaturuar = fiscalInvoices.reduce((s, i) => s + i.total, 0);
-  const totalPagesa = fiscalInvoices.filter((i) => invType(i) === "payment").reduce((s, i) => s + i.total, 0);
-  const totalSherbim = fiscalInvoices.filter((i) => invType(i) === "service").reduce((s, i) => s + i.total, 0);
 
   const handleDownloadPDF = (inv: FiscalInvoice) => {
     downloadInvoicePDF(inv);
@@ -129,41 +123,12 @@ export default function Invoices() {
         </div>
       </div>
 
-      {/* Summary — total + të ndara sipas llojit */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl">
-        <div className="rounded-card bg-card p-4 shadow-subtle">
-          <p className="text-xs text-muted-foreground mb-1">Totali i faturuar</p>
-          <p className="text-xl font-semibold tabular-nums font-mono text-foreground">€{totalFaturuar.toFixed(2)}</p>
-        </div>
-        <div className="rounded-card bg-card p-4 shadow-subtle">
-          <p className="text-xs text-muted-foreground mb-1">{invoiceTypeLabelsAL.payment}</p>
-          <p className="text-xl font-semibold tabular-nums font-mono text-blue-700">€{totalPagesa.toFixed(2)}</p>
-        </div>
-        <div className="rounded-card bg-card p-4 shadow-subtle">
-          <p className="text-xs text-muted-foreground mb-1">{invoiceTypeLabelsAL.service}</p>
-          <p className="text-xl font-semibold tabular-nums font-mono text-emerald-700">€{totalSherbim.toFixed(2)}</p>
-        </div>
-      </div>
-
-      {/* Filtri sipas llojit */}
-      <div className="flex gap-1.5">
-        {([
-          { key: "all", label: "Të gjitha" },
-          { key: "payment", label: invoiceTypeLabelsAL.payment },
-          { key: "service", label: invoiceTypeLabelsAL.service },
-        ] as { key: "all" | InvoiceType; label: string }[]).map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTypeFilter(t.key)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-              typeFilter === t.key
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/70"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      {/* Summary */}
+      <div className="rounded-card bg-card p-4 shadow-subtle max-w-xs">
+        <p className="text-xs text-muted-foreground mb-1">Totali i faturuar</p>
+        <p className="text-xl font-semibold tabular-nums font-mono text-foreground">
+          €{totalFaturuar.toFixed(2)}
+        </p>
       </div>
 
       {/* Search */}
@@ -212,15 +177,6 @@ export default function Invoices() {
                       </div>
                       <div className="px-4 py-3 flex-1">
                         <span className="text-xs font-mono text-muted-foreground">{inv.invoiceNumber}</span>
-                        <div className="mt-0.5">
-                          <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                            invType(inv) === "payment"
-                              ? "bg-blue-50 text-blue-700"
-                              : "bg-emerald-50 text-emerald-700"
-                          }`}>
-                            {invoiceTypeLabelsAL[invType(inv)]}
-                          </span>
-                        </div>
                       </div>
                       <div className="px-4 py-3 flex-1">
                         <p className="text-sm font-medium text-foreground">{inv.patientName}</p>
