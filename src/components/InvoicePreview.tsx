@@ -8,6 +8,9 @@ interface InvoicePreviewProps {
 export function InvoicePreview({ invoice }: InvoicePreviewProps) {
   const clinic = useClinicStore((s) => s.clinic);
   const clinicName = clinic?.name || clinicConfig.name;
+  const clinicAddress = clinic?.address || clinicConfig.address;
+  const clinicPhone = clinic?.phone || clinicConfig.phone;
+  const clinicEmail = clinic?.email || clinicConfig.email;
   const sym = invoice.currencySymbol || clinicConfig.currencySymbol;
   const cur = invoice.currency || clinicConfig.currency;
 
@@ -26,8 +29,8 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
             </div>
           </div>
           <div className="mt-2 text-xs text-gray-600 space-y-0.5">
-            <p>{clinicConfig.address}</p>
-            <p>Tel: {clinicConfig.phone} | Email: {clinicConfig.email}</p>
+            <p>{clinicAddress}</p>
+            <p>Tel: {clinicPhone} | Email: {clinicEmail}</p>
             <p className="font-medium">NIPT: {clinicConfig.nipt}</p>
           </div>
         </div>
@@ -148,8 +151,8 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
       {/* Footer */}
       <div className="border-t border-gray-200 pt-3 text-[11px] text-gray-400 text-center space-y-0.5">
         <p>Faleminderit për besimin tuaj! | Shëndet të mirë!</p>
-        <p>{clinicName} | NIPT: {clinicConfig.nipt} | {clinicConfig.address}</p>
-        <p className="text-[10px]">Kjo faturë është gjeneruar automatikisht nga sistemi DenteOS CRM</p>
+        <p>{clinicName} | NIPT: {clinicConfig.nipt} | {clinicAddress}</p>
+        <p className="text-[10px]">Kjo faturë është gjeneruar automatikisht nga {clinicName}</p>
       </div>
     </div>
   );
