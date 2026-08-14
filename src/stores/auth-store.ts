@@ -52,6 +52,7 @@ interface AuthStore {
   initialized: boolean;
   clinics: Clinic[];
   plans: Plan[];
+  permissions: Record<string, string[]>;
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<{ error: string | null }>;
   register: (email: string, password: string, fullName: string, role?: string, clinicId?: string) => Promise<{ error: string | null }>;
@@ -60,6 +61,9 @@ interface AuthStore {
   fetchProfile: () => Promise<void>;
   fetchClinics: () => Promise<void>;
   fetchPlans: () => Promise<void>;
+  fetchPermissions: () => Promise<void>;
+  setRolePermissions: (role: string, pages: string[]) => Promise<{ error: string | null }>;
+  getEffectivePermissions: (role: string) => string[];
   hasPermission: (page: string) => boolean;
   isSuperAdmin: () => boolean;
   isClinicAdmin: () => boolean;
@@ -77,6 +81,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   initialized: false,
   clinics: [],
   plans: [],
+  permissions: {},
 
   initialize: async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -125,7 +130,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     try {
       Object.keys(localStorage).filter((k) => k.startsWith("sb-")).forEach((k) => localStorage.removeItem(k));
     } catch (e) { /* injoro */ }
-    set({ user: null, session: null, profile: null, clinics: [], plans: [] });
+    set({ user: null, session: null, profile: null, clinics: [], plans: [], permissions: {} });
     window.location.href = "/login";
   },
 
@@ -142,6 +147,36 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
     if (error) console.error("[auth] fetchProfile:", error.message);
     if (data) set({ profile: data as Profile });
+    await get().fetchPermissions();
+  },
+
+  fetchPermissions: async () => {
+    const clinicId = get().profile?.clinic_id;
+    if (!clinicId) { set({ permissions: {} }); return; }
+    const { data, error } = await supabase
+      .from("role_permissions")
+      .select("role, pages")
+      .eq("clinic_id", clinicId);
+    if (error) { console.error("[auth] fetchPermissions:", error.message); return; }
+    const map: Record<string, string[]> = {};
+    (data || []).forEach((r: any) => { map[r.role] = r.pages || []; });
+    set({ permissions: map });
+  },
+
+  setRolePermissions: async (role, pages) => {
+    const clinicId = get().profile?.clinic_id;
+    if (!clinicId) return { error: "Nuk u gjet klinika." };
+    const { error } = await supabase
+      .from("role_permissions")
+      .upsert({ clinic_id: clinicId, role, pages, updated_at: new Date().toISOString() }, { onConflict: "clinic_id,role" });
+    if (error) return { error: error.message };
+    set((s) => ({ permissions: { ...s.permissions, [role]: pages } }));
+    return { error: null };
+  },
+
+  getEffectivePermissions: (role) => {
+    const custom = get().permissions[role];
+    return custom ?? (rolePermissions[role as UserRole] || []);
   },
 
   fetchClinics: async () => {
@@ -157,7 +192,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   hasPermission: (page) => {
     const profile = get().profile;
     if (!profile) return true;
-    const perms = rolePermissions[profile.role] || [];
+    // Adminët kanë gjithmonë akses të plotë
+    if (profile.role === "super_admin" || profile.role === "clinic_admin") return true;
+    // Dashboard-i është gjithmonë i aksesueshëm
+    if (page === "dashboard") return true;
+    // Lejet e personalizuara nga admini (nëse s'ka, parazgjedhjet e rolit)
+    const custom = get().permissions[profile.role];
+    const perms = custom ?? (rolePermissions[profile.role] || []);
     return perms.includes("*") || perms.includes(page);
   },
 
