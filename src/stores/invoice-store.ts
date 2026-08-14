@@ -10,7 +10,6 @@ import {
   type FiscalInvoice,
   type FiscalInvoiceItem,
   type PaymentMethod,
-  type InvoiceType,
 } from "@/lib/invoice-utils";
 
 interface NewInvoiceData {
@@ -23,7 +22,6 @@ interface NewInvoiceData {
   markAsPaid?: boolean;
   currency: "EUR" | "ALL";
   currencySymbol: string;
-  invoiceType?: InvoiceType;
 }
 
 interface InvoiceStore {
@@ -70,7 +68,6 @@ function rowToInvoice(r: any): FiscalInvoice {
     notes: r.notes ?? undefined,
     currency: "EUR",
     currencySymbol: "€",
-    invoiceType: (r.invoice_type ?? "service") as InvoiceType,
   };
 }
 
@@ -124,7 +121,6 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => {
         subtotal: totals.subtotal, vatAmount: totals.vatAmount, total: totals.total,
         paid, status, paymentMethod: data.paymentMethod, dentist: data.dentist,
         notes: data.notes, currency: data.currency, currencySymbol: data.currencySymbol,
-        invoiceType: data.invoiceType ?? "service",
       };
 
       // Optimistik
@@ -144,7 +140,6 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => {
         paid,
         status,
         notes: data.notes ?? null,
-        invoice_type: data.invoiceType ?? "service",
         ...(clinicId ? { clinic_id: clinicId } : {}),
       }).then(({ error }) => {
         if (error) {
@@ -166,7 +161,6 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => {
       if (data.status !== undefined) payload.status = data.status;
       if (data.notes !== undefined) payload.notes = data.notes;
       if (data.items !== undefined) payload.items = data.items;
-      if (data.invoiceType !== undefined) payload.invoice_type = data.invoiceType;
       if (Object.keys(payload).length > 0) {
         supabase.from("invoices").update(payload).eq("id", id).then(({ error }) => {
           if (error) console.error("updateInvoice persist error:", error.message);
