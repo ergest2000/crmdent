@@ -1,6 +1,6 @@
 import {
-  LayoutDashboard, Users, Calendar, Stethoscope, Receipt, Wallet, BarChart3,
-  UserCog, Settings, Shield, UserPlus, Package, HeartPulse, LogOut,
+  LayoutDashboard, Users, Calendar, Smile, Receipt, Wallet, BarChart3,
+  UserCog, Settings, Shield, UserPlus, Package, Syringe, LogOut,
   Activity, Globe,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -16,9 +16,9 @@ const clinicNavItems = {
   dashboard: { title: "Paneli", url: "/app", icon: LayoutDashboard },
   leads: { title: "Leads", url: "/app/leads", icon: UserPlus },
   patients: { title: "Pacientët", url: "/app/patients", icon: Users },
-  doctors: { title: "Dentistë", url: "/app/doctors", icon: HeartPulse },
+  doctors: { title: "Dentistë", url: "/app/doctors", icon: Smile },
   appointments: { title: "Kalendari i Takimeve", url: "/app/appointments", icon: Calendar },
-  treatments: { title: "Trajtimet", url: "/app/treatments", icon: Stethoscope },
+  treatments: { title: "Trajtimet", url: "/app/treatments", icon: Syringe },
   finance: { title: "Financa", url: "/app/finance", icon: Wallet },
   invoices: { title: "Faturat", url: "/app/invoices", icon: Receipt },
   stock: { title: "Stoku i Produkteve", url: "/app/stock", icon: Package },
