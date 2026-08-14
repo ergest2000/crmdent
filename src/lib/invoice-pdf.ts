@@ -1,11 +1,18 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { clinicConfig, type FiscalInvoice, formatDateAL, paymentMethodLabelsAL, numberToWordsAL } from "@/lib/invoice-utils";
+import { useClinicStore } from "@/stores/clinic-store";
 
 export function generateInvoicePDF(invoice: FiscalInvoice): jsPDF {
   const doc = new jsPDF("p", "mm", "a4");
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
+  // Emri/kontaktet e klinikes reale (fallback te config nese mungojne)
+  const clinic = useClinicStore.getState().clinic;
+  const clinicName = clinic?.name || clinicConfig.name;
+  const clinicAddress = clinic?.address || clinicConfig.address;
+  const clinicPhone = clinic?.phone || clinicConfig.phone;
+  const clinicEmail = clinic?.email || clinicConfig.email;
   const sym = invoice.currencySymbol || clinicConfig.currencySymbol;
   const cur = invoice.currency || clinicConfig.currency;
   let y = margin;
@@ -14,14 +21,14 @@ export function generateInvoicePDF(invoice: FiscalInvoice): jsPDF {
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(13, 148, 136);
-  doc.text(clinicConfig.name, margin, y + 6);
+  doc.text(clinicName, margin, y + 6);
   
   doc.setFontSize(9);
   doc.setTextColor(100);
   doc.setFont("helvetica", "normal");
   doc.text("Klinike Dentare", margin, y + 12);
-  doc.text(clinicConfig.address, margin, y + 17);
-  doc.text(`Tel: ${clinicConfig.phone} | Email: ${clinicConfig.email}`, margin, y + 22);
+  doc.text(clinicAddress, margin, y + 17);
+  doc.text(`Tel: ${clinicPhone} | Email: ${clinicEmail}`, margin, y + 22);
   doc.text(`NIPT: ${clinicConfig.nipt}`, margin, y + 27);
 
   // Invoice title
@@ -180,7 +187,7 @@ export function generateInvoicePDF(invoice: FiscalInvoice): jsPDF {
   y += 4;
   doc.text(`IBAN: ${clinicConfig.iban}`, margin, y);
   y += 4;
-  doc.text(`Perfituesi: ${clinicConfig.name}`, margin, y);
+  doc.text(`Perfituesi: ${clinicName}`, margin, y);
 
   // Footer
   y = doc.internal.pageSize.getHeight() - 20;
@@ -192,9 +199,9 @@ export function generateInvoicePDF(invoice: FiscalInvoice): jsPDF {
   doc.setTextColor(150);
   doc.text("Faleminderit per besimin tuaj! | Shendet te mire!", pageWidth / 2, y, { align: "center" });
   y += 3;
-  doc.text(`${clinicConfig.name} | NIPT: ${clinicConfig.nipt} | ${clinicConfig.address}`, pageWidth / 2, y, { align: "center" });
+  doc.text(`${clinicName} | NIPT: ${clinicConfig.nipt} | ${clinicAddress}`, pageWidth / 2, y, { align: "center" });
   y += 3;
-  doc.text("Kjo fature eshte gjeneruar automatikisht nga sistemi DenteOS CRM", pageWidth / 2, y, { align: "center" });
+  doc.text(`Kjo fature eshte gjeneruar automatikisht nga ${clinicName}`, pageWidth / 2, y, { align: "center" });
 
   return doc;
 }
