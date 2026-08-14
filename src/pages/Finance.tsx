@@ -34,6 +34,17 @@ export default function Finance() {
   const overdueAmount = fiscalInvoices.filter((i) => i.status === "overdue").reduce((s, i) => s + (i.total - i.paid), 0);
   const netIncome = totalRevenue - totalExpenses;
 
+  // Të ardhurat mujore (këtë muaj) — vetëm te Financa
+  const now = new Date();
+  const inThisMonth = (d: string) => {
+    if (!d) return false;
+    const dt = new Date(d);
+    return dt.getFullYear() === now.getFullYear() && dt.getMonth() === now.getMonth();
+  };
+  const monthlyInvoices = fiscalInvoices.filter((i) => inThisMonth(i.date));
+  const sherbimMujor = monthlyInvoices.reduce((s, i) => s + i.total, 0); // vlera e shërbimeve të faturuara
+  const pagesaMujore = monthlyInvoices.reduce((s, i) => s + i.paid, 0);  // pagesa të arkëtuara
+
   const expensesByCategory = expenses.reduce((acc, e) => {
     acc[e.category] = (acc[e.category] || 0) + e.amount;
     return acc;
@@ -91,6 +102,31 @@ export default function Finance() {
             <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
           </motion.div>
         ))}
+      </div>
+
+      {/* Të ardhurat mujore — Shërbim mujor vs Pagesa mujore (këtë muaj) */}
+      <div className="rounded-card bg-card shadow-subtle">
+        <div className="px-4 py-3 border-b border-border/50">
+          <h2 className="text-sm font-medium text-foreground">Të ardhurat mujore (këtë muaj)</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border/50">
+          <div className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
+              <p className="text-xs text-muted-foreground">Shërbim mujor</p>
+            </div>
+            <p className="text-2xl font-semibold tabular-nums font-mono text-emerald-700">€{sherbimMujor.toFixed(0)}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Vlera e shërbimeve të faturuara</p>
+          </div>
+          <div className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
+              <p className="text-xs text-muted-foreground">Pagesa mujore</p>
+            </div>
+            <p className="text-2xl font-semibold tabular-nums font-mono text-blue-700">€{pagesaMujore.toFixed(0)}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Pagesa të arkëtuara</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-6">
