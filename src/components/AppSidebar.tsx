@@ -78,6 +78,8 @@ export function AppSidebar() {
   const profile = useAuthStore((s) => s.profile);
   const logout = useAuthStore((s) => s.logout);
   const isSuperAdmin = useAuthStore((s) => s.isSuperAdmin);
+  const hasPermission = useAuthStore((s) => s.hasPermission);
+  const permissions = useAuthStore((s) => s.permissions); // rirender kur ndryshojnë lejet
   const clinic = useClinicStore((s) => s.clinic);
 
   const isSA = isSuperAdmin();
@@ -86,9 +88,12 @@ export function AppSidebar() {
   const financeKeys = ["finance", "invoices", "stock", "reports"];
   const adminKeys = ["admin", "staff", "settings"];
 
-  const mainNav = isSA ? [] : allKeys.map((k) => (clinicNavItems as any)[k]);
-  const financeNav = isSA ? [] : financeKeys.map((k) => (clinicNavItems as any)[k]);
-  const adminNav = isSA ? [] : adminKeys.map((k) => (clinicNavItems as any)[k]);
+  const pick = (keys: string[]) =>
+    isSA ? [] : keys.filter((k) => hasPermission(k)).map((k) => (clinicNavItems as any)[k]);
+
+  const mainNav = pick(allKeys);
+  const financeNav = pick(financeKeys);
+  const adminNav = pick(adminKeys);
 
   const title = isSA ? "DenteOS" : (clinic?.name || "DenteOS");
 
