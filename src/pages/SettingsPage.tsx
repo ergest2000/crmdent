@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Clock, CreditCard, Save, Upload, Building2, Coins } from "lucide-react";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useClinicStore } from "@/stores/clinic-store";
+import { useAuthStore } from "@/stores/auth-store";
 import { motion } from "framer-motion";
 import { clinicalTransition } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,18 @@ export default function SettingsPage() {
     else toast({ title: "Ngarkimi i logos dështoi", variant: "destructive" });
   };
 
+  const isDemo = useAuthStore((s) => s.isDemo);
+
   const handleSave = async () => {
+    // Demo user: konfigurimet kritike të klinikës janë të kyçura.
+    if (isDemo()) {
+      toast({
+        title: "Modaliteti demo",
+        description: "Në llogarinë demo nuk mund të ndryshohen konfigurimet e klinikës.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSaving(true);
     updateSettings(form);
     const ok = await updateClinic({ name: clinicName, logo_url: logoUrl, eur_to_all: Number(eurToAll) });
