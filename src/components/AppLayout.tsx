@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useDoctorStore } from "@/stores/doctor-store";
 import { usePatientStore } from "@/stores/patient-store";
 import { useStaffStore } from "@/stores/staff-store";
@@ -12,9 +12,13 @@ import { useAuthStore } from "@/stores/auth-store";
 
 export function AppLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const initialized = useAuthStore((s) => s.initialized);
   const initialize = useAuthStore((s) => s.initialize);
+  const hasPermission = useAuthStore((s) => s.hasPermission);
+  const permissions = useAuthStore((s) => s.permissions);
+  const profile = useAuthStore((s) => s.profile);
 
   const fetchDoctors = useDoctorStore((s) => s.fetchDoctors);
   const fetchPatients = usePatientStore((s) => s.fetchPatients);
@@ -33,6 +37,17 @@ export function AppLayout() {
   useEffect(() => {
     if (initialized && !user) navigate("/login");
   }, [user, initialized]);
+
+  // Guard i aksesit: nëse stafi hap një modul pa leje (edhe me URL direkte),
+  // ridrejto te Paneli. Adminët kanë akses të plotë (hasPermission i lejon).
+  useEffect(() => {
+    if (!initialized || !user || !profile) return;
+    const path = location.pathname.replace(/\/+$/, "");
+    if (path.startsWith("/super-admin")) return; // menaxhohet nga roli super_admin
+    let key = "dashboard";
+    if (path.startsWith("/app/")) key = path.slice("/app/".length).split("/")[0];
+    if (!hasPermission(key)) navigate("/app", { replace: true });
+  }, [location.pathname, initialized, user, profile, permissions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch te dhenat ne mount (RLS i izolon sipas kliniks)
   useEffect(() => {
