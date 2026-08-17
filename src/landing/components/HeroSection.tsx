@@ -1,7 +1,14 @@
+import { Button } from "../../components/ui/button";
 import { useLanguage } from "../contexts/LanguageContext";
 
 const HeroSection = () => {
   const { t } = useLanguage();
+
+  const scrollToTrial = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    document.querySelector("#trial")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <section className="relative overflow-hidden bg-background">
       <div className="absolute inset-0 pointer-events-none">
@@ -37,6 +44,24 @@ const HeroSection = () => {
         >
           {t.hero.subtitle}
         </p>
+        <div
+          className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center gap-3 animate-fade-in"
+          style={{ animationDelay: "0.3s", animationFillMode: "both" }}
+        >
+          <a href="#trial" onClick={scrollToTrial} className="w-full sm:w-auto">
+            <Button size="lg" className="w-full sm:w-auto rounded-full px-8 font-semibold shadow-md shadow-primary/15 font-heading">
+              {t.hero.ctaTry}
+            </Button>
+          </a>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="w-full sm:w-auto rounded-full px-8 font-semibold font-heading"
+          >
+            <a href="/login">{t.hero.ctaLogin}</a>
+          </Button>
+        </div>
         <div className="mt-12 sm:mt-16 md:mt-20 mb-[-2rem] sm:mb-[-4rem] w-full max-w-5xl animate-fade-in" style={{ animationDelay: "0.4s", animationFillMode: "both" }}>
           <div className="glass rounded-xl sm:rounded-2xl p-1.5 sm:p-2 shadow-xl shadow-primary/5">
             <div className="rounded-xl overflow-hidden border border-border bg-card">
