@@ -10,6 +10,8 @@ const translations = {
       title2: "nuk ka qenë kurrë",
       title3: "kaq i lehtë.",
       subtitle: "Leads, pacientë, doktorë, takime, trajtime, fatura, financa dhe stoku — të gjitha në një platformë të vetme. DenteOS.",
+      ctaLogin: "Hyr",
+      ctaTry: "Provo Tani",
     },
     features: {
       badge: "✦ Karakteristikat",
@@ -86,6 +88,8 @@ const translations = {
       title2: "has never been",
       title3: "this easy.",
       subtitle: "Leads, patients, doctors, appointments, treatments, invoices, finance and stock — all in one platform. DenteOS.",
+      ctaLogin: "Login",
+      ctaTry: "Try Now",
     },
     features: {
       badge: "✦ Features",
@@ -162,6 +166,8 @@ const translations = {
       title2: "non è mai stata",
       title3: "così semplice.",
       subtitle: "Lead, pazienti, dottori, appuntamenti, trattamenti, fatture, finanza e magazzino — tutto in un'unica piattaforma. DenteOS.",
+      ctaLogin: "Accedi",
+      ctaTry: "Prova Ora",
     },
     features: {
       badge: "✦ Funzionalità",
@@ -235,7 +241,7 @@ const translations = {
 
 type Translations = {
   nav: { features: string; functions: string; clinic: string; faq: string; login: string; tryFree: string };
-  hero: { title1: string; title2: string; title3: string; subtitle: string };
+  hero: { title1: string; title2: string; title3: string; subtitle: string; ctaLogin: string; ctaTry: string };
   features: {
     badge: string; title: string; titleHighlight: string;
     dashboard: string; dashboardDesc: string; patients: string; patientsDesc: string;
