@@ -18,6 +18,7 @@ interface NewInvoiceData {
   dentist: string;
   paymentMethod: PaymentMethod;
   items: { description: string; quantity: number; unitPrice: number }[];
+  vatRate?: number;
   notes?: string;
   markAsPaid?: boolean;
   currency: "EUR" | "ALL";
@@ -108,7 +109,7 @@ export const useInvoiceStore = create<InvoiceStore>((set, get) => {
         .toISOString().split("T")[0];
 
       const items = data.items.map((it) =>
-        createInvoiceItem(it.description, it.quantity, it.unitPrice)
+        createInvoiceItem(it.description, it.quantity, it.unitPrice, data.vatRate ?? 0)
       );
       const totals = calculateInvoiceTotals(items);
       const id = `INV-${Date.now()}`;
