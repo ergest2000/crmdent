@@ -103,7 +103,7 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
             <span className="font-mono tabular-nums">{sym}{invoice.subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">TVSH ({clinicConfig.vatRate}%):</span>
+            <span className="text-gray-600">TVSH ({invoice.items[0]?.vatRate ?? 0}%):</span>
             <span className="font-mono tabular-nums">{sym}{invoice.vatAmount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-base font-bold border-t-2 border-primary pt-2 mt-1">
