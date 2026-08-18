@@ -134,7 +134,7 @@ export function generateInvoicePDF(invoice: FiscalInvoice): jsPDF {
   doc.text(`${sym}${invoice.subtotal.toFixed(2)}`, pageWidth - margin, y, { align: "right" });
   
   y += 5;
-  doc.text(`TVSH (${clinicConfig.vatRate}%):`, totalsX, y);
+  doc.text(`TVSH (${invoice.items[0]?.vatRate ?? 0}%):`, totalsX, y);
   doc.text(`${sym}${invoice.vatAmount.toFixed(2)}`, pageWidth - margin, y, { align: "right" });
 
   y += 2;
