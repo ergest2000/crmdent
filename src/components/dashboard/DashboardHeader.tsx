@@ -79,7 +79,7 @@ export function DashboardHeader() {
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <Button size="icon" className="h-8 w-8 rounded-full" onClick={() => navigate("/appointments")}>
+          <Button size="icon" className="h-8 w-8 rounded-full" onClick={() => navigate("/app/appointments")}>
             <Plus className="h-4 w-4" />
           </Button>
 
@@ -132,7 +132,7 @@ export function DashboardHeader() {
             </PopoverContent>
           </Popover>
 
-          <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => navigate("/settings")}>
+          <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => navigate("/app/settings")}>
             <Settings className="h-4 w-4 text-muted-foreground" />
           </Button>
           <div className="flex items-center gap-2 ml-2 pl-2 border-l border-border/50">
