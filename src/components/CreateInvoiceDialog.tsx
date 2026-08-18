@@ -56,6 +56,7 @@ export function CreateInvoiceDialog({
   const [currency, setCurrency] = useState<InvoiceCurrency>(editInvoice?.currency || "EUR");
   const [markAsPaid, setMarkAsPaid] = useState(false);
   const [notes, setNotes] = useState("");
+  const [vatRate, setVatRate] = useState<number>(0);
   const [lineItems, setLineItems] = useState<LineItem[]>(
     preselectedTreatment
       ? [{
@@ -76,6 +77,7 @@ export function CreateInvoiceDialog({
       setCurrency(editInvoice.currency || "EUR");
       setMarkAsPaid(editInvoice.status === "paid");
       setNotes(editInvoice.notes || "");
+      setVatRate(editInvoice.items[0]?.vatRate ?? 0);
       setLineItems(editInvoice.items.map((item) => ({
         treatmentId: "",
         description: item.description,
@@ -89,6 +91,7 @@ export function CreateInvoiceDialog({
       setCurrency("EUR");
       setMarkAsPaid(false);
       setNotes("");
+      setVatRate(0);
       setLineItems(
         preselectedTreatment
           ? [{ treatmentId: "", description: preselectedTreatment, quantity: 1, unitPrice: treatments.find((t) => t.name === preselectedTreatment)?.price || 0 }]
@@ -106,7 +109,7 @@ export function CreateInvoiceDialog({
   const dentists = staffMembers.filter((s) => s.role === "dentist");
 
   const subtotal = lineItems.reduce((s, li) => s + li.quantity * li.unitPrice, 0);
-  const vatAmount = subtotal * (clinicConfig.vatRate / 100);
+  const vatAmount = subtotal * (vatRate / 100);
   const total = subtotal + vatAmount;
 
   const addLineItem = () => {
@@ -154,12 +157,13 @@ export function CreateInvoiceDialog({
       })),
       notes: notes || undefined,
       markAsPaid,
+      vatRate,
     };
 
     if (editInvoice) {
       // Recalculate totals for update
       const items = lineItems.map((li) =>
-        createInvoiceItem(li.description, li.quantity, li.unitPrice)
+        createInvoiceItem(li.description, li.quantity, li.unitPrice, vatRate)
       );
       const totals = calculateInvoiceTotals(items);
       updateInvoice(editInvoice.id, {
@@ -310,8 +314,20 @@ export function CreateInvoiceDialog({
               <span className="text-muted-foreground">Nëntotali:</span>
               <span className="font-mono tabular-nums text-foreground">{currencyOptions.find(c => c.value === currency)?.symbol}{subtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">TVSH ({clinicConfig.vatRate}%):</span>
+            <div className="flex justify-between items-center text-sm">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <span>TVSH</span>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  value={vatRate}
+                  onChange={(e) => setVatRate(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                  className="h-7 w-16 text-center font-mono tabular-nums"
+                />
+                <span>%</span>
+              </div>
               <span className="font-mono tabular-nums text-foreground">{currencyOptions.find(c => c.value === currency)?.symbol}{vatAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-base font-bold border-t border-border/50 pt-1.5">
