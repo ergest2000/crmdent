@@ -83,7 +83,7 @@ export default function Dashboard() {
             <Calendar className="h-3.5 w-3.5 text-primary" />
             Takimet e Sotme
           </h3>
-          <Button size="sm" variant="ghost" className="gap-1 text-xs h-7" onClick={() => navigate("/appointments")}>
+          <Button size="sm" variant="ghost" className="gap-1 text-xs h-7" onClick={() => navigate("/app/appointments")}>
             Shiko të gjitha <ArrowUpRight className="h-3 w-3" />
           </Button>
         </div>
