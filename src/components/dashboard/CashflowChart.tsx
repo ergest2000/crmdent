@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
-import { CardDateFilter, useCardDateFilter, getPresetRange } from "@/components/dashboard/DashboardDateFilter";
+import { CardDateFilter, useCardDateFilter } from "@/components/dashboard/DashboardDateFilter";
 import { useInvoiceStore } from "@/stores/invoice-store";
 import { useFinanceStore } from "@/stores/finance-store";
 
@@ -13,32 +13,37 @@ export function CashflowChart() {
   const invoices = useInvoiceStore((s) => s.invoices);
   const { payments } = useFinanceStore();
 
+  // Grafiku: gjithmonë pamja mujore e vitit aktual (për kontekst trendi)
   const data = useMemo(() => {
-    const yearRange = getPresetRange("year");
-    const months = Array.from({ length: 12 }, (_, i) => {
+    const year = new Date().getFullYear();
+    return Array.from({ length: 12 }, (_, i) => {
       const monthPayments = payments.filter((p) => {
         const d = new Date(p.date);
-        return d.getMonth() === i && d.getFullYear() === new Date().getFullYear();
+        return d.getMonth() === i && d.getFullYear() === year;
       });
       return {
         month: monthNames[i],
         value: monthPayments.reduce((s, p) => s + p.amount, 0),
-        date: `${new Date().getFullYear()}-${String(i + 1).padStart(2, "0")}-15`,
       };
     });
+  }, [payments]);
 
-    const filtered = months.filter((d) => {
-      const date = new Date(d.date);
-      return date >= dateRange.from && date <= dateRange.to;
-    });
-    return filtered.length > 0 ? filtered : months;
-  }, [payments, dateRange]);
+  // Totali: saktësisht pagesat brenda periudhës së zgjedhur (sot/javë/muaj/vit/custom)
+  const sumInRange = (from: Date, to: Date) =>
+    payments.reduce((s, p) => {
+      const d = new Date(p.date);
+      return d >= from && d <= to ? s + p.amount : s;
+    }, 0);
 
-  const total = data.reduce((s, d) => s + d.value, 0);
-  const lastMonth = data[data.length - 1]?.value ?? 0;
-  const prevMonth = data[data.length - 2]?.value ?? 1;
-  const pctChange = prevMonth > 0 ? (((lastMonth - prevMonth) / prevMonth) * 100).toFixed(1) : "0";
-  const isUp = lastMonth >= prevMonth;
+  const total = sumInRange(dateRange.from, dateRange.to);
+
+  // Përqindja: krahasim me periudhën e mëparshme të njëjtë në gjatësi
+  const rangeMs = dateRange.to.getTime() - dateRange.from.getTime();
+  const prevTo = new Date(dateRange.from.getTime() - 1);
+  const prevFrom = new Date(dateRange.from.getTime() - rangeMs - 1);
+  const prevTotal = sumInRange(prevFrom, prevTo);
+  const pctChange = prevTotal > 0 ? (((total - prevTotal) / prevTotal) * 100).toFixed(1) : "0";
+  const isUp = total >= prevTotal;
 
   return (
     <motion.div
